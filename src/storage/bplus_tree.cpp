@@ -449,4 +449,7 @@ void BPT<Key, Value>::balanceInternalNode(
   }
 }
 
-template class BPT<int, int>;
+template <class Key, class Value>
+bool BPT<Key, Value>::empty(){
+  return root_ == -1;
+}

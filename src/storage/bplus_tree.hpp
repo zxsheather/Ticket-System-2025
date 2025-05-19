@@ -97,6 +97,7 @@ class BPT {
   void insert(const Key& key, const Value& value);
   void remove(const Key& key, const Value& value);
   sjtu::vector<Value> find(const Key& key);
+  bool empty();
 
  private:
   std::string filename_;
