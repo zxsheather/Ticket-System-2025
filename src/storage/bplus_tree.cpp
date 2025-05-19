@@ -453,3 +453,8 @@ template <class Key, class Value>
 bool BPT<Key, Value>::empty(){
   return root_ == -1;
 }
+
+template <class Key, class Value>
+bool BPT<Key , Value>::exists(const Key& key){
+  return !find(key).empty();
+}

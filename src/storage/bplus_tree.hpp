@@ -98,6 +98,7 @@ class BPT {
   void remove(const Key& key, const Value& value);
   sjtu::vector<Value> find(const Key& key);
   bool empty();
+  bool exists(const Key& key);
 
  private:
   std::string filename_;
