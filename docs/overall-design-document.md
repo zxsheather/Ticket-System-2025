@@ -428,6 +428,201 @@ public:
    - 内存管理优化
    - 全面测试
 
-## 11. 总结
+## 11. GUI扩展设计
 
-本总体设计文档详细描述了火车票订票系统的体系结构、模块设计、数据结构、算法实现和接口规范。系统采用分层架构，使用自实现的数据结构和B+树索引，确保在内存限制下高效处理大量数据。
+为便于未来扩展图形用户界面(GUI)，系统在设计时采取了以下策略：
+
+### 11.1 模型-视图分离
+
+本项目采用严格的模型-视图-控制器(MVC)模式设计：
+
+```
++---------------+    +---------------+    +---------------+
+|     视图      |    |    控制器     |    |     模型      |
+|   (View)      |<-->| (Controller)  |<-->|    (Model)    |
++---------------+    +---------------+    +---------------+
+      GUI界面           业务逻辑           数据与状态
+```
+
+- **模型层**：包含核心数据结构和业务逻辑
+- **控制器**：处理用户输入并更新模型
+- **视图层**：负责数据可视化展示
+
+这种分离确保命令行版本的所有业务逻辑可直接被GUI版本复用。
+
+### 11.2 结构化数据返回
+
+所有业务方法返回结构化数据而非格式化字符串：
+
+```cpp
+// 不使用格式化字符串作为返回值
+struct TicketQueryResult {
+    int totalCount;
+    struct TicketInfo {
+        std::string trainID;
+        std::string from;
+        std::string to;
+        std::string departureTime;
+        std::string arrivalTime;
+        int price;
+        int availableSeats;
+    };
+    sjtu::vector<TicketInfo> tickets;
+};
+
+// 业务方法返回结构化数据
+class TicketService {
+public:
+    TicketQueryResult queryTicket(const std::string& from, const std::string& to,
+                               const std::string& date, const std::string& sortType);
+};
+
+// 当前CLI版本格式化为字符串
+class CommandHandler {
+private:
+    TicketService service;
+    
+    std::string formatTicketQueryResult(const TicketQueryResult& result) {
+        // 格式化逻辑...
+    }
+};
+```
+
+### 11.3 事件与观察者模式
+
+实现观察者模式以支持GUI事件处理：
+
+```cpp
+// 事件监听器接口
+class StateChangeListener {
+public:
+    virtual void onStateChanged(const std::string& stateType, void* data) = 0;
+    virtual ~StateChangeListener() {}
+};
+
+// 系统状态管理
+class SystemState {
+private:
+    sjtu::vector<StateChangeListener*> listeners;
+public:
+    void addListener(StateChangeListener* listener);
+    void removeListener(StateChangeListener* listener);
+    void notifyStateChanged(const std::string& stateType, void* data);
+};
+```
+
+### 11.4 异步操作支持
+
+设计异步操作机制，防止GUI界面在长时间操作中阻塞：
+
+```cpp
+// 异步操作结果回调
+template<typename T>
+using Callback = std::function<void(T)>;
+
+class AsyncTicketService {
+public:
+    void queryTicketAsync(const std::string& from, const std::string& to,
+                       const std::string& date, const std::string& sortType,
+                       Callback<TicketQueryResult> callback);
+                       
+    void buyTicketAsync(const std::string& username, const std::string& trainID,
+                     const std::string& date, int num, const std::string& from,
+                     const std::string& to, bool waitlist,
+                     Callback<OrderResult> callback);
+};
+```
+
+### 11.5 详细错误信息
+
+使用结构化错误返回而非简单的成功/失败码：
+
+```cpp
+struct OperationResult {
+    bool success;
+    int errorCode;
+    std::string errorMessage;
+    
+    // 构造函数
+    static OperationResult success() { return {true, 0, ""}; }
+    static OperationResult error(int code, const std::string& msg) {
+        return {false, code, msg};
+    }
+};
+
+// 附加操作具体结果
+template<typename T>
+struct Result : public OperationResult {
+    T data;  // 操作成功时的返回数据
+    
+    static Result<T> success(const T& value) {
+        Result<T> result;
+        result.success = true;
+        result.errorCode = 0;
+        result.data = value;
+        return result;
+    }
+    
+    static Result<T> error(int code, const std::string& msg) {
+        Result<T> result;
+        result.success = false;
+        result.errorCode = code;
+        result.errorMessage = msg;
+        return result;
+    }
+};
+```
+
+### 11.6 GUI规划
+
+未来的GUI界面将包含以下主要页面：
+
+1. **登录/注册页面**：用户身份验证
+2. **主页/控制台**：系统功能导航
+3. **用户信息管理**：个人资料查看与修改
+4. **车票查询页面**：
+   - 输入查询条件（出发地、目的地、日期）
+   - 结果展示与排序
+   - 换乘查询选项
+5. **车票订购流程**：
+   - 选择座位
+   - 确认订单
+   - 支付模拟
+6. **订单管理**：
+   - 订单列表展示
+   - 订单详情查看
+   - 退票操作
+7. **管理员功能**（权限控制）：
+   - 车次管理
+   - 用户管理
+   - 系统状态监控
+
+### 11.7 设计适配
+
+将现有命令行接口适配为GUI接口：
+
+```cpp
+// 命令行接口
+class CommandLineInterface {
+private:
+    void executeCommand(const std::string& cmd, const ParamMap& params);
+};
+
+// GUI适配器
+class GUIAdapter {
+private:
+    UserService userService;
+    TrainService trainService;
+    TicketService ticketService;
+    OrderService orderService;
+    
+public:
+    // GUI调用的方法
+    Result<User> login(const std::string& username, const std::string& password);
+    Result<sjtu::vector<TicketInfo>> searchTickets(const SearchCriteria& criteria);
+    Result<Order> purchaseTicket(const TicketPurchaseInfo& info);
+    // ...其他方法
+};
+```
+
+通过以上设计，系统可以在保持核心业务逻辑不变的前提下，轻松扩展为GUI应用。
