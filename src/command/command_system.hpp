@@ -27,13 +27,12 @@ class CommandSystem {
   static const int MAX_HANDLERS = 128;
   CommandHandler* handlers[MAX_HANDLERS];
 
-  int hashCommand(const std::string& cmd) const;
-
  public:
   CommandSystem();
   ~CommandSystem();
 
   void registerHandler(const std::string& cmd_name, CommandHandler* handler);
 
-  std::string parseAndExecute(const std::string& cmd_line, std::string& timestamp);
+  std::string parseAndExecute(const std::string& cmd_line,
+                              std::string& timestamp);
 };

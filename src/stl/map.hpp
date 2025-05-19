@@ -9,6 +9,7 @@
 // only for std::less<T>
 #include <cstddef>
 #include <functional>
+
 #include "exceptions.hpp"
 #include "utility.hpp"
 
@@ -24,32 +25,32 @@ class map {
     value_type data;
     Node *left, *right, *parent;
     int height;
-    Node(const value_type &data)
+    Node(const value_type& data)
         : data(data),
           left(nullptr),
           right(nullptr),
           parent(nullptr),
           height(1) {}
-    Node(const value_type &data, Node *l, Node *r, Node *p)
+    Node(const value_type& data, Node* l, Node* r, Node* p)
         : data(data), left(l), right(r), parent(p), height(1) {}
   };
 
-  Node *root_;
+  Node* root_;
   size_t size_{};
   Compare cmp{};
 
-  Node *copytree(Node *src, Node *parent) {
+  Node* copytree(Node* src, Node* parent) {
     if (!src) {
       return nullptr;
     }
-    Node *node = new Node(src->data);
+    Node* node = new Node(src->data);
     node->parent = parent;
     node->height = src->height;
     node->left = copytree(src->left, node);
     node->right = copytree(src->right, node);
     return node;
   }
-  void clear(Node *&node) {
+  void clear(Node*& node) {
     if (node) {
       clear(node->left);
       clear(node->right);
@@ -57,22 +58,22 @@ class map {
       node = nullptr;
     }
   }
-  int height(Node *node) { return node ? node->height : 0; }
-  int balanceFactor(Node *node) {
+  int height(Node* node) { return node ? node->height : 0; }
+  int balanceFactor(Node* node) {
     if (!node) return 0;
     return height(node->left) - height(node->right);
   }
-  void updateHeight(Node *node) {
+  void updateHeight(Node* node) {
     if (node) {
       node->height = 1 + std::max(height(node->left), height(node->right));
     }
   }
-  void leftRotate(Node *&node) {
+  void leftRotate(Node*& node) {
     if (!node || !node->right) return;
-    Node *node_ = node;
-    Node *subR = node_->right;
-    Node *subRL = subR->left;
-    Node *parent = node_->parent;
+    Node* node_ = node;
+    Node* subR = node_->right;
+    Node* subRL = subR->left;
+    Node* parent = node_->parent;
     node_->right = subRL;
     if (subRL) subRL->parent = node_;
     subR->left = node_;
@@ -91,12 +92,12 @@ class map {
     updateHeight(subR);
     node = subR;
   }
-  void rightRotate(Node *&node) {
+  void rightRotate(Node*& node) {
     if (!node || !node->left) return;
-    Node *node_ = node;
-    Node *subL = node_->left;
-    Node *subLR = subL->right;
-    Node *parent = node_->parent;
+    Node* node_ = node;
+    Node* subL = node_->left;
+    Node* subLR = subL->right;
+    Node* parent = node_->parent;
     node_->left = subLR;
     if (subLR) subLR->parent = node_;
     subL->right = node_;
@@ -115,7 +116,7 @@ class map {
     updateHeight(subL);
     node = subL;
   }
-  pair<Node *, bool> insert(Node *&node, const Key &key, const T &value) {
+  pair<Node*, bool> insert(Node*& node, const Key& key, const T& value) {
     if (!node) {
       node = new Node({key, value});
       size_++;
@@ -171,7 +172,7 @@ class map {
       return {node, false};
     }
   }
-  Node *find(Node *node, const Key &key) const {
+  Node* find(Node* node, const Key& key) const {
     if (!node) return nullptr;
     if (cmp(key, node->data.first)) {
       return find(node->left, key);
@@ -182,13 +183,13 @@ class map {
     }
   }
 
-  Node *swapNode(Node *dst, Node *src) {
-    Node *dstParent = dst->parent;
-    Node *srcParent = src->parent;
-    Node *dstLeft = dst->left;
-    Node *dstRight = dst->right;
-    Node *srcLeft = src->left;
-    Node *srcRight = src->right;
+  Node* swapNode(Node* dst, Node* src) {
+    Node* dstParent = dst->parent;
+    Node* srcParent = src->parent;
+    Node* dstLeft = dst->left;
+    Node* dstRight = dst->right;
+    Node* srcLeft = src->left;
+    Node* srcRight = src->right;
     if (src->parent != dst) {
       dst->parent = srcParent;
       dst->left = srcLeft;
@@ -238,7 +239,7 @@ class map {
     return src;
   }
 
-  pair<bool, bool> erase(Node *&node, const Key &key) {
+  pair<bool, bool> erase(Node*& node, const Key& key) {
     if (!node) return {true, false};
     if (cmp(key, node->data.first)) {
       auto result = erase(node->left, key);
@@ -258,7 +259,7 @@ class map {
       }
     } else {
       if (!node->left && !node->right) {
-        Node *node_ = node;
+        Node* node_ = node;
         if (node->parent) {
           if (node->parent->left == node) {
             node->parent->left = nullptr;
@@ -270,9 +271,9 @@ class map {
         node = nullptr;
         return {false, true};
       } else if (!node->left) {
-        Node *node_ = node;
-        Node *temp = node->right;
-        Node *parent = node->parent;
+        Node* node_ = node;
+        Node* temp = node->right;
+        Node* parent = node->parent;
         if (parent) {
           if (parent->left == node) {
             parent->left = temp;
@@ -287,9 +288,9 @@ class map {
         node = temp;
         return {false, true};
       } else if (!node->right) {
-        Node *node_ = node;
-        Node *temp = node->left;
-        Node *parent = node->parent;
+        Node* node_ = node;
+        Node* temp = node->left;
+        Node* parent = node->parent;
         if (parent) {
           if (parent->left == node) {
             parent->left = temp;
@@ -304,8 +305,8 @@ class map {
         node = temp;
         return {false, true};
       } else {
-        Node *node_ = node;
-        Node *temp = node_->right;
+        Node* node_ = node;
+        Node* temp = node_->right;
         while (temp->left) {
           temp = temp->left;
         }
@@ -363,7 +364,7 @@ class map {
     }
   }
 
-  bool adjust(Node *&node, int subTree) {
+  bool adjust(Node*& node, int subTree) {
     if (subTree) {
       if (balanceFactor(node) == 1) {
         return true;
@@ -420,16 +421,16 @@ class map {
   class const_iterator;
   class iterator {
    public:
-    Node *node{};
-    map *container{};
+    Node* node{};
+    map* container{};
 
    public:
     iterator() {}
 
-    iterator(const iterator &other)
+    iterator(const iterator& other)
         : node(other.node), container(other.container) {}
 
-    iterator(Node *node, map *container) : node(node), container(container) {}
+    iterator(Node* node, map* container) : node(node), container(container) {}
 
     /**
      * TODO iter++
@@ -443,7 +444,7 @@ class map {
             node = node->left;
           }
         } else {
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->right == node) {
             node = parent;
             parent = parent->parent;
@@ -459,7 +460,7 @@ class map {
     /**
      * TODO ++iter
      */
-    iterator &operator++() {
+    iterator& operator++() {
       if (node) {
         if (node->right) {
           node = node->right;
@@ -467,7 +468,7 @@ class map {
             node = node->left;
           }
         } else {
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->right == node) {
             node = parent;
             parent = parent->parent;
@@ -492,7 +493,7 @@ class map {
             node = node->right;
           }
         } else {
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           if (parent == nullptr) {
             throw invalid_iterator();
           }
@@ -517,7 +518,7 @@ class map {
     /**
      * TODO --iter
      */
-    iterator &operator--() {
+    iterator& operator--() {
       if (node) {
         if (node->left) {
           node = node->left;
@@ -528,7 +529,7 @@ class map {
           if (node->parent == nullptr) {
             throw invalid_iterator();
           }
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->left == node) {
             node = parent;
             parent = parent->parent;
@@ -551,29 +552,29 @@ class map {
      * a operator to check whether two iterators are same (pointing to the same
      * memory).
      */
-    value_type &operator*() const {
+    value_type& operator*() const {
       if (!node) {
         throw invalid_iterator();
       }
       return node->data;
     }
 
-    bool operator==(const iterator &rhs) const {
+    bool operator==(const iterator& rhs) const {
       return node == rhs.node && container == rhs.container;
     }
 
-    bool operator==(const const_iterator &rhs) const {
+    bool operator==(const const_iterator& rhs) const {
       return node == rhs.node && container == rhs.container;
     }
 
     /**
      * some other operator for iterator.
      */
-    bool operator!=(const iterator &rhs) const {
+    bool operator!=(const iterator& rhs) const {
       return node != rhs.node || container != rhs.container;
     }
 
-    bool operator!=(const const_iterator &rhs) const {
+    bool operator!=(const const_iterator& rhs) const {
       return node != rhs.node || container != rhs.container;
     }
 
@@ -583,7 +584,7 @@ class map {
      * <http://kelvinh.github.io/blog/2013/11/20/overloading-of-member-access-operator-dash-greater-than-symbol-in-cpp/>
      * for help.
      */
-    value_type *operator->() const noexcept {
+    value_type* operator->() const noexcept {
       if (!node) {
         throw invalid_iterator();
       }
@@ -594,28 +595,28 @@ class map {
     // it should has similar member method as iterator.
     //  and it should be able to construct from an iterator.
    public:
-    Node *node{};
-    const map *container{};
+    Node* node{};
+    const map* container{};
 
    public:
     const_iterator() {}
 
-    const_iterator(const const_iterator &other)
+    const_iterator(const const_iterator& other)
         : node(other.node), container(other.container) {}
 
-    const_iterator(const iterator &other)
+    const_iterator(const iterator& other)
         : node(other.node), container(other.container) {}
-    const_iterator(Node *node, const map *container)
+    const_iterator(Node* node, const map* container)
         : node(node), container(container) {}
 
-    const_iterator &operator=(const const_iterator &other) {
+    const_iterator& operator=(const const_iterator& other) {
       if (this != &other) {
         node = other.node;
         container = other.container;
       }
       return *this;
     }
-    const_iterator &operator=(const iterator &other) {
+    const_iterator& operator=(const iterator& other) {
       node = other.node;
       container = other.container;
       return *this;
@@ -629,7 +630,7 @@ class map {
             node = node->left;
           }
         } else {
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->right == node) {
             node = parent;
             parent = parent->parent;
@@ -641,7 +642,7 @@ class map {
       }
       return temp;
     }
-    const_iterator &operator++() {
+    const_iterator& operator++() {
       if (node) {
         if (node->right) {
           node = node->right;
@@ -649,7 +650,7 @@ class map {
             node = node->left;
           }
         } else {
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->right == node) {
             node = parent;
             parent = parent->parent;
@@ -673,7 +674,7 @@ class map {
           if (node->parent == nullptr) {
             throw invalid_iterator();
           }
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->left == node) {
             node = parent;
             parent = parent->parent;
@@ -691,7 +692,7 @@ class map {
       }
       return temp;
     }
-    const_iterator &operator--() {
+    const_iterator& operator--() {
       if (node) {
         if (node->left) {
           node = node->left;
@@ -702,7 +703,7 @@ class map {
           if (node->parent == nullptr) {
             throw invalid_iterator();
           }
-          Node *parent = node->parent;
+          Node* parent = node->parent;
           while (parent && parent->left == node) {
             node = parent;
             parent = parent->parent;
@@ -720,25 +721,25 @@ class map {
       }
       return *this;
     }
-    value_type &operator*() const {
+    value_type& operator*() const {
       if (!node) {
         throw invalid_iterator();
       }
       return node->data;
     }
-    bool operator==(const iterator &rhs) const {
+    bool operator==(const iterator& rhs) const {
       return node == rhs.node && container == rhs.container;
     }
-    bool operator==(const const_iterator &rhs) const {
+    bool operator==(const const_iterator& rhs) const {
       return node == rhs.node && container == rhs.container;
     }
-    bool operator!=(const iterator &rhs) const {
+    bool operator!=(const iterator& rhs) const {
       return node != rhs.node || container != rhs.container;
     }
-    bool operator!=(const const_iterator &rhs) const {
+    bool operator!=(const const_iterator& rhs) const {
       return node != rhs.node || container != rhs.container;
     }
-    value_type *operator->() const noexcept {
+    value_type* operator->() const noexcept {
       if (!node) {
         throw invalid_iterator();
       }
@@ -750,13 +751,13 @@ class map {
    * TODO two constructors
    */
   map() : root_(nullptr), size_(0) {}
-  map(const Compare &cmp) : root_(nullptr), size_(0), cmp(cmp) {}
+  map(const Compare& cmp) : root_(nullptr), size_(0), cmp(cmp) {}
 
-  map(const map &other) : root_(nullptr), size_(other.size_), cmp(other.cmp) {
+  map(const map& other) : root_(nullptr), size_(other.size_), cmp(other.cmp) {
     root_ = copytree(other.root_, nullptr);
   }
 
-  map &operator=(const map &other) {
+  map& operator=(const map& other) {
     if (this != &other) {
       clear(root_);
       size_ = other.size_;
@@ -768,23 +769,23 @@ class map {
 
   ~map() { clear(root_); }
 
-  T &at(const Key &key) {
-    Node *node = find(root_, key);
+  T& at(const Key& key) {
+    Node* node = find(root_, key);
     if (!node) {
       throw index_out_of_bound();
     }
     return node->data.second;
   }
 
-  const T &at(const Key &key) const {
-    Node *node = find(root_, key);
+  const T& at(const Key& key) const {
+    Node* node = find(root_, key);
     if (!node) {
       throw index_out_of_bound();
     }
     return node->data.second;
   }
 
-  T &operator[](const Key &key) {
+  T& operator[](const Key& key) {
     auto result = insert(root_, key, T());
     return result.first->data.second;
   }
@@ -792,8 +793,8 @@ class map {
   /**
    * behave like at() throw index_out_of_bound if such key does not exist.
    */
-  const T &operator[](const Key &key) const {
-    Node *node = find(root_, key);
+  const T& operator[](const Key& key) const {
+    Node* node = find(root_, key);
     if (!node) {
       throw index_out_of_bound();
     }
@@ -804,7 +805,7 @@ class map {
    * return a iterator to the beginning
    */
   iterator begin() {
-    Node *node = root_;
+    Node* node = root_;
     while (node && node->left) {
       node = node->left;
     }
@@ -812,7 +813,7 @@ class map {
   }
 
   const_iterator cbegin() const {
-    Node *node = root_;
+    Node* node = root_;
     while (node && node->left) {
       node = node->left;
     }
@@ -853,7 +854,7 @@ class map {
    *   the iterator to the new element (or the element that prevented the
    * insertion), the second one is true if insert successfully, or false.
    */
-  pair<iterator, bool> insert(const value_type &value) {
+  pair<iterator, bool> insert(const value_type& value) {
     auto result = insert(root_, value.first, value.second);
     return {iterator(result.first, this), result.second};
   }
@@ -884,8 +885,8 @@ class map {
    *     since this container does not allow duplicates.
    * The default method of check the equivalence is !(a < b || b > a)
    */
-  size_t count(const Key &key) const {
-    Node *node = find(root_, key);
+  size_t count(const Key& key) const {
+    Node* node = find(root_, key);
     if (node) {
       return 1;
     } else {
@@ -900,8 +901,8 @@ class map {
    *   If no such element is found, past-the-end (see end()) iterator is
    * returned.
    */
-  iterator find(const Key &key) {
-    Node *node = find(root_, key);
+  iterator find(const Key& key) {
+    Node* node = find(root_, key);
     if (node) {
       return iterator(node, this);
     } else {
@@ -909,8 +910,8 @@ class map {
     }
   }
 
-  const_iterator find(const Key &key) const {
-    Node *node = find(root_, key);
+  const_iterator find(const Key& key) const {
+    Node* node = find(root_, key);
     if (node) {
       return const_iterator(node, this);
     } else {

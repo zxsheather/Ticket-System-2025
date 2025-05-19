@@ -1,0 +1,31 @@
+#pragma once
+#include "../model/user.hpp"
+#include "../stl/map.hpp"
+#include "../stl/utility.hpp"
+#include "../storage/bplus_tree.hpp"
+
+class UserManager {
+ private:
+  BPT<long long, User> user_db;
+  // from username to privilege
+  sjtu::map<std::string, int> logged_in_users;
+
+  bool is_first_user;
+
+ public:
+  UserManager();
+
+  int addUser(const std::string& cur_username, const std::string& username,
+              const std::string& password, const std::string& name,
+              const std::string& mailAddr, const std::string& privilege);
+
+  int login(const std::string& username, const std::string& password);
+
+  int logout(const std::string& username);
+
+  sjtu::pair<int, UserProfile> queryProfile(const std::string& cur_username,
+                                            const std::string& username);
+
+  sjtu::pair<int, UserProfile> modifyProfile(const std::string& cur_username,
+                                             const std::string& username);
+};

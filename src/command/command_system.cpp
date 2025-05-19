@@ -3,28 +3,32 @@
 #include <cstring>
 #include <iostream>
 
-ParamMap::ParamMap() { std::memset(exists, 0, sizeof(exists)); }
+#include "../utilities/hash.hpp"
 
-bool ParamMap::has(char key) const { return exists[key - 'a']; }
+ParamMap::ParamMap() {
+  std::memset(exists, 0, sizeof(exists));
+}
 
-std::string ParamMap::get(char key) const { return values[key - 'a']; }
+bool ParamMap::has(char key) const {
+  return exists[key - 'a'];
+}
+
+std::string ParamMap::get(char key) const {
+  return values[key - 'a'];
+}
 
 void ParamMap::set(char key, const std::string& value) {
   values[key - 'a'] = value;
   exists[key - 'a'] = true;
 }
 
-void ParamMap::clear() { memset(exists, 0, sizeof(exists)); }
-
-int CommandSystem::hashCommand(const std::string& cmd) const {
-  int hash = 0;
-  for (char c : cmd) {
-    hash = (hash * 31 + c) % MAX_HANDLERS;
-  }
-  return hash;
+void ParamMap::clear() {
+  memset(exists, 0, sizeof(exists));
 }
 
-CommandSystem::CommandSystem() { memset(handlers, 0, sizeof(handlers)); }
+CommandSystem::CommandSystem() {
+  memset(handlers, 0, sizeof(handlers));
+}
 
 CommandSystem::~CommandSystem() {
   for (int i = 0; i < MAX_HANDLERS; ++i) {
@@ -36,11 +40,12 @@ CommandSystem::~CommandSystem() {
 
 void CommandSystem::registerHandler(const std::string& cmd_name,
                                     CommandHandler* handler) {
-  int hash = hashCommand(cmd_name);
+  int hash = Hash::hashCommand(cmd_name, MAX_HANDLERS);
   handlers[hash] = handler;
 }
 
-std::string CommandSystem::parseAndExecute(const std::string& cmd_line, std::string& timestamp) {
+std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
+                                           std::string& timestamp) {
   std::string cmd_name;
   ParamMap params;
 
@@ -69,9 +74,9 @@ std::string CommandSystem::parseAndExecute(const std::string& cmd_line, std::str
     pos++;
   }
 
-  int hash = hashCommand(cmd_name);
+  int hash = Hash::hashCommand(cmd_name, MAX_HANDLERS);
   if (!handlers[hash]) {
-    std::cerr << cmd_name << " Not Implemented Yet";
+    std::cerr << cmd_name << " Not Implemented Yet\n";
     return "bye";
   }
   std::string result = handlers[hash]->execute(params);

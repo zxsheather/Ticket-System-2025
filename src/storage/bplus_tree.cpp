@@ -1,19 +1,17 @@
 #include "bplus_tree.hpp"
 
-
-
 template <class Key, class Value>
-void BPT<Key, Value>::insert(const Key &key, const Value &value) {
+void BPT<Key, Value>::insert(const Key& key, const Value& value) {
   if (root_ == -1) {
     Block<Key, Value> new_block;
     new_block.data[0] = Key_Value<Key, Value>{key, value};
     new_block.size++;
     new_block.next = -1;
-    //int head_ = block_file_.write(new_block);
+    // int head_ = block_file_.write(new_block);
     int head_ = cache_manager_.write_block(new_block);
     root_ = head_;
     block_file_.write_info(head_, 1);
-    //index_file_.write_info(root_, 1);
+    // index_file_.write_info(root_, 1);
     height_ = 0;
     return;
   }
@@ -32,7 +30,7 @@ void BPT<Key, Value>::insert(const Key &key, const Value &value) {
 }
 
 template <class Key, class Value>
-void BPT<Key, Value>::remove(const Key &key, const Value &value) {
+void BPT<Key, Value>::remove(const Key& key, const Value& value) {
   sjtu::vector<pathFrame<Key, Value>> path;
   Key_Value<Key, Value> kv = Key_Value<Key, Value>{key, value};
   int leaf_addr = findLeafNode(kv, path);
@@ -40,7 +38,7 @@ void BPT<Key, Value>::remove(const Key &key, const Value &value) {
     return;
   }
   Block<Key, Value> leaf;
-  //block_file_.read(leaf, leaf_addr);
+  // block_file_.read(leaf, leaf_addr);
   cache_manager_.read_block(leaf, leaf_addr);
   int pos = -1;
   pos = leaf.size == 0 ? 0 : binarySearch(leaf.data, kv, 0, leaf.size - 1);
@@ -52,7 +50,7 @@ void BPT<Key, Value>::remove(const Key &key, const Value &value) {
   }
   leaf.size--;
   if (leaf.size >= (DEFAULT_LEAF_SIZE + 1) / 3) {
-    //block_file_.update(leaf, leaf_addr);
+    // block_file_.update(leaf, leaf_addr);
     cache_manager_.update_block(leaf, leaf_addr);
     return;
   }
@@ -60,14 +58,14 @@ void BPT<Key, Value>::remove(const Key &key, const Value &value) {
 }
 
 template <class Key, class Value>
-sjtu::vector<Value> BPT<Key, Value>::find(const Key &key) {
+sjtu::vector<Value> BPT<Key, Value>::find(const Key& key) {
   sjtu::vector<Value> result;
   size_t level = 1;
   int ptr = root_;
   if (ptr == -1) {
     return result;
   }
-  if(height_ >= 1){
+  if (height_ >= 1) {
     while (level < height_) {
       Index<Key, Value> index;
       // index_file_.read(index, ptr);
@@ -77,14 +75,14 @@ sjtu::vector<Value> BPT<Key, Value>::find(const Key &key) {
       level++;
     }
     Index<Key, Value> index;
-    //index_file_.read(index, ptr);
+    // index_file_.read(index, ptr);
     cache_manager_.read_index(index, ptr);
     int idx = binarySearch(index.keys, key, 0, index.size - 1);
     ptr = index.children[idx];
   }
-  
+
   Block<Key, Value> block;
-  //block_file_.read(block, ptr);
+  // block_file_.read(block, ptr);
   cache_manager_.read_block(block, ptr);
   int idx = binarySearch(block.data, key, 0, block.size - 1);
   if (idx >= block.size) {
@@ -92,7 +90,7 @@ sjtu::vector<Value> BPT<Key, Value>::find(const Key &key) {
     if (ptr == -1) {
       return result;
     }
-    //block_file_.read(block, ptr);
+    // block_file_.read(block, ptr);
     cache_manager_.read_block(block, ptr);
     idx = 0;
   } else if (block.data[idx].key > key) {
@@ -104,7 +102,7 @@ sjtu::vector<Value> BPT<Key, Value>::find(const Key &key) {
       if (ptr == -1) {
         return result;
       }
-      //block_file_.read(block, ptr);
+      // block_file_.read(block, ptr);
       cache_manager_.read_block(block, ptr);
       idx = 0;
     }
@@ -117,8 +115,8 @@ sjtu::vector<Value> BPT<Key, Value>::find(const Key &key) {
 }
 
 template <class Key, class Value>
-int BPT<Key, Value>::findLeafNode(const Key_Value<Key, Value> &key,
-                                  sjtu::vector<pathFrame<Key, Value>> &path) {
+int BPT<Key, Value>::findLeafNode(const Key_Value<Key, Value>& key,
+                                  sjtu::vector<pathFrame<Key, Value>>& path) {
   int ptr = root_;
   path.clear();
   if (ptr == -1) {
@@ -128,25 +126,24 @@ int BPT<Key, Value>::findLeafNode(const Key_Value<Key, Value> &key,
     Index<Key, Value> node;
     // index_file_.read(node, ptr);
     cache_manager_.read_index(node, ptr);
-    int idx =
-        (node.size == 0) ? 0 : binarySearchForBigOrEqual(node.keys, key, 0, node.size - 1);
+    int idx = (node.size == 0)
+                  ? 0
+                  : binarySearchForBigOrEqual(node.keys, key, 0, node.size - 1);
     path.push_back({node, ptr, idx});
     ptr = node.children[idx];
   }
   return ptr;
 }
 
-
-
 template <class Key, class Value>
-bool BPT<Key, Value>::insertIntoLeaf(int leaf_addr, const Key &key,
-                                     const Value &value,
-                                     Key_Value<Key, Value> &split_key,
-                                     int &new_leaf_addr) {
+bool BPT<Key, Value>::insertIntoLeaf(int leaf_addr, const Key& key,
+                                     const Value& value,
+                                     Key_Value<Key, Value>& split_key,
+                                     int& new_leaf_addr) {
   Block<Key, Value> leaf;
-  //block_file_.read(leaf, leaf_addr);
+  // block_file_.read(leaf, leaf_addr);
   cache_manager_.read_block(leaf, leaf_addr);
-  
+
   int pos = (leaf.size == 0)
                 ? 0
                 : binarySearch(leaf.data, {key, value}, 0, leaf.size - 1);
@@ -155,9 +152,9 @@ bool BPT<Key, Value>::insertIntoLeaf(int leaf_addr, const Key &key,
   }
   leaf.data[pos] = Key_Value<Key, Value>{key, value};
   leaf.size++;
-  //block_file_.update(leaf, leaf_addr);
+  // block_file_.update(leaf, leaf_addr);
   cache_manager_.update_block(leaf, leaf_addr);
-  
+
   if (leaf.size == DEFAULT_LEAF_SIZE + 1) {
     return splitLeaf(leaf, leaf_addr, split_key, new_leaf_addr);
   }
@@ -165,9 +162,9 @@ bool BPT<Key, Value>::insertIntoLeaf(int leaf_addr, const Key &key,
 }
 
 template <class Key, class Value>
-bool BPT<Key, Value>::splitLeaf(Block<Key, Value> &leaf, int leaf_addr,
-                                Key_Value<Key, Value> &split_key,
-                                int &new_leaf_addr) {
+bool BPT<Key, Value>::splitLeaf(Block<Key, Value>& leaf, int leaf_addr,
+                                Key_Value<Key, Value>& split_key,
+                                int& new_leaf_addr) {
   int mid = (DEFAULT_LEAF_SIZE + 1) / 2;
   Block<Key, Value> new_leaf;
   new_leaf.size = DEFAULT_LEAF_SIZE + 1 - mid;
@@ -177,29 +174,29 @@ bool BPT<Key, Value>::splitLeaf(Block<Key, Value> &leaf, int leaf_addr,
   leaf.size = mid;
   new_leaf.next = leaf.next;
   split_key = new_leaf.data[0];
-  //new_leaf_addr = block_file_.write(new_leaf);
+  // new_leaf_addr = block_file_.write(new_leaf);
   new_leaf_addr = cache_manager_.write_block(new_leaf);
   leaf.next = new_leaf_addr;
-  //block_file_.update(leaf, leaf_addr);
+  // block_file_.update(leaf, leaf_addr);
   cache_manager_.update_block(leaf, leaf_addr);
   return true;
 }
 
 template <class Key, class Value>
 bool BPT<Key, Value>::insertIntoParent(
-    const sjtu::vector<pathFrame<Key, Value>> &path, int level,
-    const Key_Value<Key, Value> &key, int right_child) {
+    const sjtu::vector<pathFrame<Key, Value>>& path, int level,
+    const Key_Value<Key, Value>& key, int right_child) {
   if (level < 0) {
     Index<Key, Value> new_root;
     new_root.size = 1;
     new_root.keys[0] = key;
     new_root.children[0] = path.empty() ? root_ : path[0].index_addr;
     new_root.children[1] = right_child;
-    //root_ = index_file_.write(new_root);
+    // root_ = index_file_.write(new_root);
     root_ = cache_manager_.write_index(new_root);
-    //index_file_.write_info(root_, 1);
+    // index_file_.write_info(root_, 1);
     height_++;
-    //index_file_.write_info(height_ , 2);
+    // index_file_.write_info(height_ , 2);
     return true;
   }
   auto [parent, parent_addr, child_idx] = path[level];
@@ -212,7 +209,7 @@ bool BPT<Key, Value>::insertIntoParent(
   parent.children[child_idx + 1] = right_child;
   parent.size++;
   if (parent.size < DEFAULT_ORDER) {
-    //index_file_.update(parent, parent_addr);
+    // index_file_.update(parent, parent_addr);
     cache_manager_.update_index(parent, parent_addr);
     return false;
   }
@@ -228,9 +225,9 @@ bool BPT<Key, Value>::insertIntoParent(
 }
 
 template <class Key, class Value>
-bool BPT<Key, Value>::splitInternal(Index<Key, Value> &node, int node_addr,
-                                    Key_Value<Key, Value> &split_key,
-                                    int &new_node_addr) {
+bool BPT<Key, Value>::splitInternal(Index<Key, Value>& node, int node_addr,
+                                    Key_Value<Key, Value>& split_key,
+                                    int& new_node_addr) {
   Index<Key, Value> new_node;
   int split_pos = DEFAULT_ORDER / 2;
   new_node.size = DEFAULT_ORDER - split_pos - 1;
@@ -241,8 +238,8 @@ bool BPT<Key, Value>::splitInternal(Index<Key, Value> &node, int node_addr,
   new_node.children[new_node.size] = node.children[DEFAULT_ORDER];
   split_key = node.keys[split_pos];
   node.size = split_pos;
-  //index_file_.update(node, node_addr);
-  //new_node_addr = index_file_.write(new_node);
+  // index_file_.update(node, node_addr);
+  // new_node_addr = index_file_.write(new_node);
   cache_manager_.update_index(node, node_addr);
   new_node_addr = cache_manager_.write_index(new_node);
   return true;
@@ -250,17 +247,17 @@ bool BPT<Key, Value>::splitInternal(Index<Key, Value> &node, int node_addr,
 
 template <class Key, class Value>
 void BPT<Key, Value>::balanceAfterRemove(
-    Block<Key, Value> &node, int node_addr,
-    sjtu::vector<pathFrame<Key, Value>> &path) {
+    Block<Key, Value>& node, int node_addr,
+    sjtu::vector<pathFrame<Key, Value>>& path) {
   if (path.empty()) {
     if (node.size == 0) {
       root_ = -1;
       height_ = 0;
-      //index_file_.write_info(-1, 1);
-      //index_file_.write_info(0, 2);
+      // index_file_.write_info(-1, 1);
+      // index_file_.write_info(0, 2);
       return;
     } else {
-      //block_file_.update(node, node_addr);
+      // block_file_.update(node, node_addr);
       cache_manager_.update_block(node, node_addr);
       return;
     }
@@ -271,7 +268,7 @@ void BPT<Key, Value>::balanceAfterRemove(
   int left_sibling_addr;
   if (child_idx >= 1) {
     left_sibling_addr = parent.children[child_idx - 1];
-    //block_file_.read(left_sibling, left_sibling_addr);
+    // block_file_.read(left_sibling, left_sibling_addr);
     cache_manager_.read_block(left_sibling, left_sibling_addr);
     if (left_sibling.size > (DEFAULT_LEAF_SIZE + 1) / 2) {
       for (int i = node.size; i >= 1; --i) {
@@ -281,9 +278,9 @@ void BPT<Key, Value>::balanceAfterRemove(
       node.size++;
       left_sibling.size--;
       parent.keys[child_idx - 1] = node.data[0];
-      //block_file_.update(node, node_addr);
-      //block_file_.update(left_sibling, left_sibling_addr);
-      //index_file_.update(parent, parent_addr);
+      // block_file_.update(node, node_addr);
+      // block_file_.update(left_sibling, left_sibling_addr);
+      // index_file_.update(parent, parent_addr);
       cache_manager_.update_block(node, node_addr);
       cache_manager_.update_block(left_sibling, left_sibling_addr);
       cache_manager_.update_index(parent, parent_addr);
@@ -294,7 +291,7 @@ void BPT<Key, Value>::balanceAfterRemove(
   int right_sibling_addr;
   if (child_idx <= parent.size - 1) {
     right_sibling_addr = parent.children[child_idx + 1];
-    //block_file_.read(right_sibling, right_sibling_addr);
+    // block_file_.read(right_sibling, right_sibling_addr);
     cache_manager_.read_block(right_sibling, right_sibling_addr);
     if (right_sibling.size > (DEFAULT_LEAF_SIZE + 1) / 2) {
       node.data[node.size] = right_sibling.data[0];
@@ -304,9 +301,9 @@ void BPT<Key, Value>::balanceAfterRemove(
       node.size++;
       right_sibling.size--;
       parent.keys[child_idx] = right_sibling.data[0];
-      //block_file_.update(node, node_addr);
-      //block_file_.update(right_sibling, right_sibling_addr);
-      //index_file_.update(parent, parent_addr);
+      // block_file_.update(node, node_addr);
+      // block_file_.update(right_sibling, right_sibling_addr);
+      // index_file_.update(parent, parent_addr);
       cache_manager_.update_block(node, node_addr);
       cache_manager_.update_block(right_sibling, right_sibling_addr);
       cache_manager_.update_index(parent, parent_addr);
@@ -320,7 +317,7 @@ void BPT<Key, Value>::balanceAfterRemove(
     }
     left_sibling.size += node.size;
     left_sibling.next = node.next;
-    //block_file_.update(left_sibling, left_sibling_addr);
+    // block_file_.update(left_sibling, left_sibling_addr);
     cache_manager_.update_block(left_sibling, left_sibling_addr);
     removeFromParent(parent, parent_addr, child_idx - 1, path);
   } else if (child_idx <= parent.size - 1) {
@@ -329,7 +326,7 @@ void BPT<Key, Value>::balanceAfterRemove(
     }
     node.size += right_sibling.size;
     node.next = right_sibling.next;
-    //block_file_.update(node, node_addr);
+    // block_file_.update(node, node_addr);
     cache_manager_.update_block(node, node_addr);
     removeFromParent(parent, parent_addr, child_idx, path);
   }
@@ -337,8 +334,8 @@ void BPT<Key, Value>::balanceAfterRemove(
 
 template <class Key, class Value>
 void BPT<Key, Value>::removeFromParent(
-    Index<Key, Value> &parent, int parent_addr, int key_idx,
-    sjtu::vector<pathFrame<Key, Value>> &path) {
+    Index<Key, Value>& parent, int parent_addr, int key_idx,
+    sjtu::vector<pathFrame<Key, Value>>& path) {
   for (int i = key_idx; i < parent.size - 1; ++i) {
     parent.keys[i] = parent.keys[i + 1];
   }
@@ -348,13 +345,13 @@ void BPT<Key, Value>::removeFromParent(
   parent.size--;
   if (path.empty() && parent.size == 0) {
     root_ = parent.children[0];
-    height_ --;
-    //index_file_.write_info(root_, 1);
-    //index_file_.write_info(height_ , 2);
+    height_--;
+    // index_file_.write_info(root_, 1);
+    // index_file_.write_info(height_ , 2);
     return;
   }
   if (path.empty() || parent.size >= DEFAULT_ORDER / 3) {
-    //index_file_.update(parent, parent_addr);
+    // index_file_.update(parent, parent_addr);
     cache_manager_.update_index(parent, parent_addr);
     return;
   }
@@ -363,15 +360,15 @@ void BPT<Key, Value>::removeFromParent(
 
 template <class Key, class Value>
 void BPT<Key, Value>::balanceInternalNode(
-    Index<Key, Value> &node, int node_addr,
-    sjtu::vector<pathFrame<Key, Value>> &path) {
+    Index<Key, Value>& node, int node_addr,
+    sjtu::vector<pathFrame<Key, Value>>& path) {
   auto [parent, parent_addr, node_idx] = path.back();
   path.pop_back();
   Index<Key, Value> left_sibling;
   int left_sibling_addr;
   if (node_idx >= 1) {
     left_sibling_addr = parent.children[node_idx - 1];
-    //index_file_.read(left_sibling, left_sibling_addr);
+    // index_file_.read(left_sibling, left_sibling_addr);
     cache_manager_.read_index(left_sibling, left_sibling_addr);
 
     if (left_sibling.size > DEFAULT_ORDER / 2) {
@@ -386,9 +383,9 @@ void BPT<Key, Value>::balanceInternalNode(
       parent.keys[node_idx - 1] = left_sibling.keys[left_sibling.size - 1];
       node.size++;
       left_sibling.size--;
-      //index_file_.update(node, node_addr);
-      //index_file_.update(left_sibling, left_sibling_addr);
-      //index_file_.update(parent, parent_addr);
+      // index_file_.update(node, node_addr);
+      // index_file_.update(left_sibling, left_sibling_addr);
+      // index_file_.update(parent, parent_addr);
       cache_manager_.update_index(node, node_addr);
       cache_manager_.update_index(left_sibling, left_sibling_addr);
       cache_manager_.update_index(parent, parent_addr);
@@ -400,7 +397,7 @@ void BPT<Key, Value>::balanceInternalNode(
   int right_sibling_addr;
   if (node_idx <= parent.size - 1) {
     right_sibling_addr = parent.children[node_idx + 1];
-    //index_file_.read(right_sibling, right_sibling_addr);
+    // index_file_.read(right_sibling, right_sibling_addr);
     cache_manager_.read_index(right_sibling, right_sibling_addr);
 
     if (right_sibling.size > DEFAULT_ORDER / 2) {
@@ -415,9 +412,9 @@ void BPT<Key, Value>::balanceInternalNode(
         right_sibling.children[i] = right_sibling.children[i + 1];
       }
       right_sibling.size--;
-      //index_file_.update(node, node_addr);
-      //index_file_.update(right_sibling, right_sibling_addr);
-      //index_file_.update(parent, parent_addr);
+      // index_file_.update(node, node_addr);
+      // index_file_.update(right_sibling, right_sibling_addr);
+      // index_file_.update(parent, parent_addr);
       cache_manager_.update_index(node, node_addr);
       cache_manager_.update_index(right_sibling, right_sibling_addr);
       cache_manager_.update_index(parent, parent_addr);
@@ -434,7 +431,7 @@ void BPT<Key, Value>::balanceInternalNode(
       left_sibling.children[left_sibling.size + 1 + i] = node.children[i];
     }
     left_sibling.size += node.size + 1;
-    //index_file_.update(left_sibling, left_sibling_addr);
+    // index_file_.update(left_sibling, left_sibling_addr);
     cache_manager_.update_index(left_sibling, left_sibling_addr);
     removeFromParent(parent, parent_addr, node_idx - 1, path);
   } else if (node_idx <= parent.size - 1) {
@@ -446,9 +443,9 @@ void BPT<Key, Value>::balanceInternalNode(
       node.children[node.size + 1 + i] = right_sibling.children[i];
     }
     node.size += right_sibling.size + 1;
-    //index_file_.update(node, node_addr);
+    // index_file_.update(node, node_addr);
     cache_manager_.update_index(node, node_addr);
-    removeFromParent(parent, parent_addr, node_idx , path);
+    removeFromParent(parent, parent_addr, node_idx, path);
   }
 }
 

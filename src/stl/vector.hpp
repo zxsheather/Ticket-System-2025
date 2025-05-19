@@ -41,8 +41,8 @@ class vector {
    public:
     using difference_type = std::ptrdiff_t;
     using value_type = T;
-    using pointer = T *;
-    using reference = T &;
+    using pointer = T*;
+    using reference = T&;
     using iterator_category = std::random_access_iterator_tag;
 
    private:
@@ -51,38 +51,38 @@ class vector {
      *   just add whatever you want.
      */
    public:
-    vector<T> *container;
+    vector<T>* container;
     size_t index;
-    iterator(vector<T> *_container = nullptr, size_t _index = 0)
+    iterator(vector<T>* _container = nullptr, size_t _index = 0)
         : container(_container), index(_index) {}
     /**
      * return a new iterator which pointer n-next elements
      * as well as operator-
      */
-    iterator operator+(const int &n) const {
+    iterator operator+(const int& n) const {
       return iterator(container, index + n);
       // TODO
     }
-    iterator operator-(const int &n) const {
+    iterator operator-(const int& n) const {
       return iterator(container, index - n);
       // TODO
     }
     // return the distance between two iterators,
     // if these two iterators point to different vectors, throw
     // invaild_iterator.
-    int operator-(const iterator &rhs) const {
+    int operator-(const iterator& rhs) const {
       if (container != rhs.container) {
         throw invalid_iterator();
       }
       return index - rhs.index;
       // TODO
     }
-    iterator &operator+=(const int &n) {
+    iterator& operator+=(const int& n) {
       index += n;
       return *this;
       // TODO
     }
-    iterator &operator-=(const int &n) {
+    iterator& operator-=(const int& n) {
       index -= n;
       return *this;
       // TODO
@@ -98,7 +98,7 @@ class vector {
     /**
      * TODO ++iter
      */
-    iterator &operator++() {
+    iterator& operator++() {
       ++index;
       return *this;
     }
@@ -113,31 +113,31 @@ class vector {
     /**
      * TODO --iter
      */
-    iterator &operator--() {
+    iterator& operator--() {
       --index;
       return *this;
     }
     /**
      * TODO *it
      */
-    T &operator*() const { return (container->data_[index]); }
+    T& operator*() const { return (container->data_[index]); }
     /**
      * a operator to check whether two iterators are same (pointing to the same
      * memory address).
      */
-    bool operator==(const iterator &rhs) const {
+    bool operator==(const iterator& rhs) const {
       return index == rhs.index && container == rhs.container;
     }
-    bool operator==(const const_iterator &rhs) const {
+    bool operator==(const const_iterator& rhs) const {
       return index == rhs.index && container == rhs.container;
     }
     /**
      * some other operator for iterator.
      */
-    bool operator!=(const iterator &rhs) const {
+    bool operator!=(const iterator& rhs) const {
       return index != rhs.index || container != rhs.container;
     }
-    bool operator!=(const const_iterator &rhs) const {
+    bool operator!=(const const_iterator& rhs) const {
       return index != rhs.index || container != rhs.container;
     }
   };
@@ -149,26 +149,26 @@ class vector {
    public:
     using difference_type = std::ptrdiff_t;
     using value_type = T;
-    using pointer = T *;
-    using reference = T &;
+    using pointer = T*;
+    using reference = T&;
     using iterator_category = std::output_iterator_tag;
 
    private:
    public:
-    const vector<T> *container;
+    const vector<T>* container;
     size_t index;
-    const_iterator(const vector<T> *_container = nullptr, size_t _index = 0)
+    const_iterator(const vector<T>* _container = nullptr, size_t _index = 0)
         : container(_container), index(_index) {}
-    const T &operator*() const { return (container->data_[index]); }
+    const T& operator*() const { return (container->data_[index]); }
 
-    bool operator==(const const_iterator &rhs) const {
+    bool operator==(const const_iterator& rhs) const {
       return index == rhs.index && container == rhs.container;
     }
 
-    bool operator!=(const const_iterator &rhs) const {
+    bool operator!=(const const_iterator& rhs) const {
       return index != rhs.index || container != rhs.container;
     }
-    const_iterator &operator++() {
+    const_iterator& operator++() {
       ++index;
       return *this;
     }
@@ -177,7 +177,7 @@ class vector {
       ++(*this);
       return temp;
     }
-    const_iterator &operator--() {
+    const_iterator& operator--() {
       --index;
       return *this;
     }
@@ -192,12 +192,12 @@ class vector {
    * At least two: default constructor, copy constructor
    */
   vector() : size_(0), capacity_(DEFAULT_CAPACITY) {
-    data_ = reinterpret_cast<T *>(::operator new(sizeof(T) * capacity_));
+    data_ = reinterpret_cast<T*>(::operator new(sizeof(T) * capacity_));
   }
-  vector(const vector &other) {
+  vector(const vector& other) {
     size_ = other.size_;
     capacity_ = other.capacity_;
-    data_ = reinterpret_cast<T *>(::operator new(sizeof(T) * capacity_));
+    data_ = reinterpret_cast<T*>(::operator new(sizeof(T) * capacity_));
     for (size_t i = 0; i < size_; ++i) {
       new (data_ + i) T(other.data_[i]);
     }
@@ -214,7 +214,7 @@ class vector {
   /**
    * TODO Assignment operator
    */
-  vector &operator=(const vector &other) {
+  vector& operator=(const vector& other) {
     if (this == &other) {
       return *this;
     }
@@ -224,7 +224,7 @@ class vector {
     ::operator delete(data_);
     size_ = other.size_;
     capacity_ = other.capacity_;
-    data_ = reinterpret_cast<T *>(::operator new(sizeof(T) * capacity_));
+    data_ = reinterpret_cast<T*>(::operator new(sizeof(T) * capacity_));
     for (size_t i = 0; i < size_; ++i) {
       new (data_ + i) T(other.data_[i]);
     }
@@ -234,13 +234,13 @@ class vector {
    * assigns specified element with bounds checking
    * throw index_out_of_bound if pos is not in [0, size)
    */
-  T &at(const size_t &pos) {
+  T& at(const size_t& pos) {
     if (pos < 0 || pos >= size_) {
       throw index_out_of_bound();
     }
     return data_[pos];
   }
-  const T &at(const size_t &pos) const {
+  const T& at(const size_t& pos) const {
     if (pos < 0 || pos >= size_) {
       throw index_out_of_bound();
     }
@@ -252,13 +252,13 @@ class vector {
    * !!! Pay attentions
    *   In STL this operator does not check the boundary but I want you to do.
    */
-  T &operator[](const size_t &pos) {
+  T& operator[](const size_t& pos) {
     if (pos < 0 || pos >= size_) {
       throw index_out_of_bound();
     }
     return data_[pos];
   }
-  const T &operator[](const size_t &pos) const {
+  const T& operator[](const size_t& pos) const {
     if (pos < 0 || pos >= size_) {
       throw index_out_of_bound();
     }
@@ -268,7 +268,7 @@ class vector {
    * access the first element.
    * throw container_is_empty if size == 0
    */
-  const T &front() const {
+  const T& front() const {
     if (size_ == 0) {
       throw container_is_empty();
     }
@@ -278,7 +278,7 @@ class vector {
    * access the last element.
    * throw container_is_empty if size == 0
    */
-  const T &back() const {
+  const T& back() const {
     if (size_ == 0) {
       throw container_is_empty();
     }
@@ -317,7 +317,7 @@ class vector {
    * inserts value before pos
    * returns an iterator pointing to the inserted value.
    */
-  iterator insert(iterator pos, const T &value) {
+  iterator insert(iterator pos, const T& value) {
     if (size_ == capacity_) {
       double_space();
     }
@@ -336,7 +336,7 @@ class vector {
    * throw index_out_of_bound if ind > size (in this situation ind can be size
    * because after inserting the size will increase 1.)
    */
-  iterator insert(const size_t &ind, const T &value) {
+  iterator insert(const size_t& ind, const T& value) {
     if (ind > size_) {
       throw index_out_of_bound();
     }
@@ -374,7 +374,7 @@ class vector {
    * return an iterator pointing to the following element.
    * throw index_out_of_bound if ind >= size
    */
-  iterator erase(const size_t &ind) {
+  iterator erase(const size_t& ind) {
     if (ind >= size_) {
       throw index_out_of_bound();
     }
@@ -389,7 +389,7 @@ class vector {
   /**
    * adds an element to the end.
    */
-  void push_back(const T &value) {
+  void push_back(const T& value) {
     if (size_ == capacity_) {
       double_space();
     }
@@ -409,13 +409,13 @@ class vector {
   }
 
  private:
-  T *data_;
+  T* data_;
   size_t size_;
   size_t capacity_;
 
   void double_space() {
-    T *new_data =
-        reinterpret_cast<T *>(::operator new(sizeof(T) * capacity_ * 2));
+    T* new_data =
+        reinterpret_cast<T*>(::operator new(sizeof(T) * capacity_ * 2));
     for (size_t i = 0; i < size_; ++i) {
       new (new_data + i) T(data_[i]);
       data_[i].~T();

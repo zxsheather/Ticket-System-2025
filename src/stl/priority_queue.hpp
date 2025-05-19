@@ -22,22 +22,22 @@ class priority_queue {
     Node *left, *right, *parent;
     int npl;
     Node() : left(nullptr), right(nullptr), parent(nullptr), npl(-1) {}
-    Node(const T &data_, Node *left_ = nullptr, Node *right_ = nullptr,
-         Node *parent_ = nullptr)
+    Node(const T& data_, Node* left_ = nullptr, Node* right_ = nullptr,
+         Node* parent_ = nullptr)
         : data(data_), left(left_), right(right_), parent(parent_), npl(-1) {}
   };
-  Node *copytree(Node *src, Node *parent) {
+  Node* copytree(Node* src, Node* parent) {
     if (src == nullptr) {
       return nullptr;
     }
-    Node *newNode = new Node(src->data);
+    Node* newNode = new Node(src->data);
     newNode->left = copytree(src->left, newNode);
     newNode->right = copytree(src->right, newNode);
     newNode->parent = parent;
     newNode->npl = src->npl;
     return newNode;
   };
-  void clear(Node *&root) {
+  void clear(Node*& root) {
     if (root == nullptr) {
       return;
     }
@@ -46,7 +46,7 @@ class priority_queue {
     delete root;
     root = nullptr;
   };
-  Node *merge_heap(Node *x, Node *y) {
+  Node* merge_heap(Node* x, Node* y) {
     if (x == nullptr) {
       return y;
     }
@@ -88,7 +88,7 @@ class priority_queue {
     return x;
   }
 
-  Node *root_;
+  Node* root_;
   size_t size_;
 
  public:
@@ -101,7 +101,7 @@ class priority_queue {
    * @brief copy constructor
    * @param other the priority_queue to be copied
    */
-  priority_queue(const priority_queue &other) : size_(other.size_) {
+  priority_queue(const priority_queue& other) : size_(other.size_) {
     root_ = copytree(other.root_, nullptr);
     size_ = other.size_;
   }
@@ -116,11 +116,11 @@ class priority_queue {
    * @param other the priority_queue to be assigned from
    * @return a reference to this priority_queue after assignment
    */
-  priority_queue &operator=(const priority_queue &other) {
+  priority_queue& operator=(const priority_queue& other) {
     if (this == &other) {
       return *this;
     }
-    Node *newNode = copytree(other.root_, nullptr);
+    Node* newNode = copytree(other.root_, nullptr);
     clear(root_);
     root_ = nullptr;
     root_ = newNode;
@@ -133,7 +133,7 @@ class priority_queue {
    * @return a reference of the top element.
    * @throws container_is_empty if empty() returns true
    */
-  const T &top() const {
+  const T& top() const {
     if (empty()) {
       throw container_is_empty();
     }
@@ -144,8 +144,8 @@ class priority_queue {
    * @brief push new element to the priority queue.
    * @param e the element to be pushed
    */
-  void push(const T &e) {
-    Node *newNode = new Node(e);
+  void push(const T& e) {
+    Node* newNode = new Node(e);
     try {
       root_ = merge_heap(root_, newNode);
       size_++;
@@ -164,16 +164,16 @@ class priority_queue {
       throw container_is_empty();
     }
     try {
-      Node *old_root = root_;
-      Node *left_child = root_->left;
-      Node *right_child = root_->right;
+      Node* old_root = root_;
+      Node* left_child = root_->left;
+      Node* right_child = root_->right;
       if (left_child) {
         left_child->parent = nullptr;
       }
       if (right_child) {
         right_child->parent = nullptr;
       }
-      Node *new_root = merge_heap(left_child, right_child);
+      Node* new_root = merge_heap(left_child, right_child);
       delete old_root;
       root_ = new_root;
       size_--;
@@ -202,9 +202,9 @@ class priority_queue {
    * The complexity is at most O(logn).
    * @param other the priority_queue to be merged.
    */
-  void merge(priority_queue &other) {
+  void merge(priority_queue& other) {
     try {
-      Node *new_root = merge_heap(root_, other.root_);
+      Node* new_root = merge_heap(root_, other.root_);
       size_ += other.size_;
       other.size_ = 0;
       other.root_ = nullptr;

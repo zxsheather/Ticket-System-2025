@@ -6,31 +6,31 @@ struct Key_Value {
   Key key;
   Value value;
 
-  bool operator<(const Key_Value &other) const {
+  bool operator<(const Key_Value& other) const {
     if (key == other.key) {
       return value < other.value;
     }
     return key < other.key;
   }
 
-  bool operator>(const Key_Value &other) const {
+  bool operator>(const Key_Value& other) const {
     if (key == other.key) {
       return value > other.value;
     }
     return key > other.key;
   }
 
-  bool operator==(const Key_Value &other) const {
+  bool operator==(const Key_Value& other) const {
     return key == other.key && value == other.value;
   }
 
-  bool operator!=(const Key_Value &other) const { return !(*this == other); }
+  bool operator!=(const Key_Value& other) const { return !(*this == other); }
 
-  bool operator<=(const Key_Value &other) const {
+  bool operator<=(const Key_Value& other) const {
     return *this < other || *this == other;
   }
 
-  bool operator>=(const Key_Value &other) const {
+  bool operator>=(const Key_Value& other) const {
     return *this > other || *this == other;
   }
 };
@@ -47,7 +47,7 @@ struct Index {
 
   Index() : size(0) {}
 
-  Index(const Index &other) {
+  Index(const Index& other) {
     size = other.size;
     for (size_t i = 0; i < size; ++i) {
       keys[i] = other.keys[i];
@@ -55,7 +55,7 @@ struct Index {
     }
     children[size] = other.children[size];
   }
-  Index &operator=(const Index &other) {
+  Index& operator=(const Index& other) {
     if (this != &other) {
       size = other.size;
       for (size_t i = 0; i < size; ++i) {
@@ -66,7 +66,7 @@ struct Index {
     }
     return *this;
   }
-  Index(Index &&other) noexcept {
+  Index(Index&& other) noexcept {
     size = other.size;
     for (size_t i = 0; i < size; ++i) {
       keys[i] = other.keys[i];
@@ -74,7 +74,7 @@ struct Index {
     }
     children[size] = other.children[size];
   }
-  Index &operator=(Index &&other) noexcept {
+  Index& operator=(Index&& other) noexcept {
     if (this != &other) {
       size = other.size;
       for (size_t i = 0; i < size; ++i) {
@@ -95,14 +95,14 @@ struct Block {
 
   Block() : next(-1), size(0) {}
 
-  Block(const Block &other) {
+  Block(const Block& other) {
     next = other.next;
     size = other.size;
     for (size_t i = 0; i < size; ++i) {
       data[i] = other.data[i];
     }
   }
-  Block &operator=(const Block &other) {
+  Block& operator=(const Block& other) {
     if (this != &other) {
       next = other.next;
       size = other.size;
@@ -112,14 +112,14 @@ struct Block {
     }
     return *this;
   }
-  Block(Block &&other) noexcept {
+  Block(Block&& other) noexcept {
     next = other.next;
     size = other.size;
     for (size_t i = 0; i < size; ++i) {
       data[i] = other.data[i];
     }
   }
-  Block &operator=(Block &&other) noexcept {
+  Block& operator=(Block&& other) noexcept {
     if (this != &other) {
       next = other.next;
       size = other.size;

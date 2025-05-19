@@ -25,16 +25,16 @@ class list {
     node *prev, *next;
     bool valid;
     node() : prev(nullptr), next(nullptr), valid(false) {}
-    node(const T &value, node *prev_ = nullptr, node *next_ = nullptr)
+    node(const T& value, node* prev_ = nullptr, node* next_ = nullptr)
         : prev(prev_), next(next_), valid(true) {
       new (&data_buf) T(value);
     }
     ~node() {
       if (valid) {
-        reinterpret_cast<T *>(&data_buf)->~T();
+        reinterpret_cast<T*>(&data_buf)->~T();
       }
     }
-    T &data() { return *reinterpret_cast<T *>(&data_buf); }
+    T& data() { return *reinterpret_cast<T*>(&data_buf); }
   };
 
  protected:
@@ -48,7 +48,7 @@ class list {
    * insert node cur before node pos
    * return the inserted node cur
    */
-  node *insert(node *pos, node *cur) {
+  node* insert(node* pos, node* cur) {
     cur->prev = pos->prev;
     cur->next = pos;
     pos->prev->next = cur;
@@ -59,7 +59,7 @@ class list {
    * remove node pos from list (no need to delete the node)
    * return the removed node pos
    */
-  node *erase(node *pos) {
+  node* erase(node* pos) {
     pos->prev->next = pos->next;
     pos->next->prev = pos->prev;
 
@@ -75,14 +75,14 @@ class list {
      *   just add whatever you want.
      */
    public:
-    node *cur;
-    iterator(node *p = nullptr) : cur(p) {}
+    node* cur;
+    iterator(node* p = nullptr) : cur(p) {}
     iterator operator++(int) {
       iterator tmp = *this;
       cur = cur->next;
       return tmp;
     }
-    iterator &operator++() {
+    iterator& operator++() {
       cur = cur->next;
       return *this;
     }
@@ -91,7 +91,7 @@ class list {
       cur = cur->prev;
       return tmp;
     }
-    iterator &operator--() {
+    iterator& operator--() {
       cur = cur->prev;
       return *this;
     }
@@ -100,7 +100,7 @@ class list {
      * TODO *it
      * throw std::exception if iterator is invalid
      */
-    T &operator*() const {
+    T& operator*() const {
       if (cur == nullptr || cur->prev == nullptr || cur->next == nullptr)
         throw std::exception();
       return cur->data();
@@ -109,7 +109,7 @@ class list {
      * TODO it->field
      * throw std::exception if iterator is invalid
      */
-    T *operator->() const noexcept {
+    T* operator->() const noexcept {
       if (cur == nullptr || cur->prev == nullptr || cur->next == nullptr)
         throw std::exception();
       return &(cur->data());
@@ -119,14 +119,14 @@ class list {
      * a operator to check whether two iterators are same (pointing to the same
      * memory).
      */
-    bool operator==(const iterator &rhs) const { return cur == rhs.cur; }
-    bool operator==(const const_iterator &rhs) const { return cur == rhs.cur; }
+    bool operator==(const iterator& rhs) const { return cur == rhs.cur; }
+    bool operator==(const const_iterator& rhs) const { return cur == rhs.cur; }
 
     /**
      * some other operator for iterator.
      */
-    bool operator!=(const iterator &rhs) const { return cur != rhs.cur; }
-    bool operator!=(const const_iterator &rhs) const { return cur != rhs.cur; }
+    bool operator!=(const iterator& rhs) const { return cur != rhs.cur; }
+    bool operator!=(const const_iterator& rhs) const { return cur != rhs.cur; }
   };
 
   /**
@@ -137,16 +137,16 @@ class list {
   class const_iterator {
    private:
    public:
-    node *cur;
-    const_iterator(node *p = nullptr) : cur(p) {}
-    const_iterator(const iterator &other) : cur(other.cur) {}
-    const_iterator(const const_iterator &other) : cur(other.cur) {}
+    node* cur;
+    const_iterator(node* p = nullptr) : cur(p) {}
+    const_iterator(const iterator& other) : cur(other.cur) {}
+    const_iterator(const const_iterator& other) : cur(other.cur) {}
     const_iterator operator++(int) {
       const_iterator tmp = *this;
       cur = cur->next;
       return tmp;
     }
-    const_iterator &operator++() {
+    const_iterator& operator++() {
       cur = cur->next;
       return *this;
     }
@@ -155,11 +155,11 @@ class list {
       cur = cur->prev;
       return tmp;
     }
-    const_iterator &operator--() {
+    const_iterator& operator--() {
       cur = cur->prev;
       return *this;
     }
-    const T &operator*() const {
+    const T& operator*() const {
       if (cur == nullptr || cur->prev == nullptr) throw std::exception();
       return cur->data();
     }
@@ -168,7 +168,7 @@ class list {
      * TODO it->field
      * throw std::exception if iterator is invalid
      */
-    const T *operator->() const noexcept {
+    const T* operator->() const noexcept {
       if (cur == nullptr || cur->prev == nullptr) throw std::exception();
       return &(cur->data());
     }
@@ -177,14 +177,14 @@ class list {
      * a operator to check whether two iterators are same (pointing to the same
      * memory).
      */
-    bool operator==(const iterator &rhs) const { return cur == rhs.cur; }
-    bool operator==(const const_iterator &rhs) const { return cur == rhs.cur; }
+    bool operator==(const iterator& rhs) const { return cur == rhs.cur; }
+    bool operator==(const const_iterator& rhs) const { return cur == rhs.cur; }
 
     /**
      * some other operator for iterator.
      */
-    bool operator!=(const iterator &rhs) const { return cur != rhs.cur; }
-    bool operator!=(const const_iterator &rhs) const { return cur != rhs.cur; }
+    bool operator!=(const iterator& rhs) const { return cur != rhs.cur; }
+    bool operator!=(const const_iterator& rhs) const { return cur != rhs.cur; }
   };
 
   /**
@@ -198,8 +198,8 @@ class list {
     tail->prev = head;
     sz = 0;
   }
-  list(const list &other) : list() {
-    for (node *p = other.head->next; p != other.tail; p = p->next) {
+  list(const list& other) : list() {
+    for (node* p = other.head->next; p != other.tail; p = p->next) {
       push_back(p->data());
     }
   }
@@ -214,12 +214,12 @@ class list {
   /**
    * TODO Assignment operator
    */
-  list &operator=(const list &other) {
+  list& operator=(const list& other) {
     if (this == &other) {
       return *this;
     }
     clear();
-    for (node *p = other.head->next; p != other.tail; p = p->next) {
+    for (node* p = other.head->next; p != other.tail; p = p->next) {
       push_back(p->data());
     }
     return *this;
@@ -228,13 +228,13 @@ class list {
    * access the first / last element
    * throw container_is_empty when the container is empty.
    */
-  const T &front() const {
+  const T& front() const {
     if (empty()) {
       throw container_is_empty();
     }
     return head->next->data();
   }
-  const T &back() const {
+  const T& back() const {
     if (empty()) {
       throw container_is_empty();
     }
@@ -263,9 +263,9 @@ class list {
    * clears the contents
    */
   virtual void clear() {
-    node *cur = head->next;
+    node* cur = head->next;
     while (cur != tail) {
-      node *tmp = cur;
+      node* tmp = cur;
       cur = cur->next;
       delete tmp;
     }
@@ -278,7 +278,7 @@ class list {
    * return an iterator pointing to the inserted value
    * throw if the iterator is invalid
    */
-  virtual iterator insert(iterator pos, const T &value) {
+  virtual iterator insert(iterator pos, const T& value) {
     if (pos.cur == nullptr || pos.cur->prev == nullptr) throw std::exception();
     sz++;
     return iterator(insert(pos.cur, new node(value)));
@@ -298,14 +298,14 @@ class list {
       throw std::exception();
     }
     sz--;
-    node *tmp = pos.cur->next;
+    node* tmp = pos.cur->next;
     delete erase(pos.cur);
     return iterator(tmp);
   }
   /**
    * adds an element to the end
    */
-  void push_back(const T &value) {
+  void push_back(const T& value) {
     sz++;
     insert(tail, new node(value));
   }
@@ -323,7 +323,7 @@ class list {
   /**
    * inserts an element to the beginning.
    */
-  void push_front(const T &value) {
+  void push_front(const T& value) {
     sz++;
     insert(head->next, new node(value));
   }
