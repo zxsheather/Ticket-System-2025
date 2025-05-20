@@ -60,18 +60,32 @@
 - **hash_map**：无序映射，基于哈希表实现
 - **priority_queue**：优先队列，用于候补订单系统
 - **utility**：提供pair等工具类型
+- **FixedString**：固定长度字符串，避免内存碎片化
 
 ### 3.2 业务数据结构
 
 #### 3.2.1 用户数据结构
 
 ```cpp
+// 用户核心数据结构
 struct User {
-    std::string username;  // 用户名，唯一标识符
-    std::string password;  // 密码
-    std::string name;      // 用户真实姓名
-    std::string mailAddr;  // 邮箱地址
-    int privilege;         // 用户权限级别(0-10)
+    FixedString<USERNAME_MAX_LEN> username;  // 用户名，唯一标识符
+    FixedString<PASSWORD_MAX_LEN> password;  // 密码
+    FixedString<NAME_MAX_LEN> name;          // 用户真实姓名
+    FixedString<MAIL_MAX_LEN> mail_addr;     // 邮箱地址
+    int privilege;                          // 用户权限级别(0-10)
+    
+    // 构造函数
+    User(const std::string& _username, const std::string& _password, 
+         const std::string& _name, const std::string& _mail_addr, const int& _privilege);
+};
+
+// 用户配置文件，用于queryProfile和modifyProfile返回
+struct UserProfile {
+    std::string username;   // 用户名
+    std::string name;       // 真实姓名
+    std::string mail_addr;  // 邮箱地址
+    int privilege;          // 权限级别
 };
 ```
 
@@ -144,6 +158,8 @@ B+树是系统的核心索引结构，提供以下接口：
     void insert(const Key &key, const Value &value); //插入一个键值对
     void remove(const Key &key, const Value &value); //删除一个键值对
     sjtu::vector<Value> find(const Key &key); //查找key下所有的值
+    bool empty(); //判断树是否为空
+    bool exists(const Key &key); //判断key是否存在
 ```
 注意： 在本项目中B+树同一个键可以对应多个值。
 
@@ -184,16 +200,40 @@ B+树是系统的核心索引结构，提供以下接口：
 
 ### 5.1 命令解析算法
 
-使用状态机进行命令解析，高效处理复杂的命令格式：
+本系统采用“参数映射 + 分发器”组合方式进行命令解析，兼顾灵活性与健壮性：
+
+1. **命令行分割**：首先将输入行分割为时间戳、命令名和参数部分。
+2. **参数映射（ParamMap）**：遍历参数部分，识别所有以`-key value`形式出现的参数，存入自定义的`ParamMap`容器，支持无序、可选参数。
+3. **命令分发（CommandSystem）**：根据命令名，通过基类指针的多态性，将参数映射传递给对应的命令处理器（CommandHandler），由其负责参数校验、类型转换和业务调用。
 
 ```cpp
-enum ParseState { TIMESTAMP, COMMAND, PARAM_KEY, PARAM_VALUE };
+// 命令注册 main.cpp
+CommandSystem command_system;
+UserManager user_manager;
+command_system.registerHandler("login", new LoginHandler(user_manager));
+...
+// 命令的初步解析与分发 command/command_system.cpp
+std::string parseAndExecute(const std::string& cmd_line,
+                              std::string& timestamp);
+// 各命令的二次解析与转交控制层
+class LoginHandler : public CommandHandler {
+ private:
+  UserManager& user_manager;
 
-std::pair<int, std::string> parseCommand(const std::string& line, ParamMap& params) {
-    ParseState state = TIMESTAMP;
-    // 状态机解析实现...
-}
+ public:
+  LoginHandler(UserManager& manager);
+  std::string execute(const ParamMap& params) override;
+};
+...
 ```
+
+**设计优点**：
+
+- 支持命令参数无序、可选、灵活扩展
+- 解析逻辑与业务逻辑解耦，便于维护和测试
+- 参数校验、类型转换集中在分发器/处理器中，易于统一管理
+- 便于后续扩展新命令或参数类型
+
 
 ### 5.2 车票查询算法
 
@@ -251,21 +291,23 @@ std::pair<int, std::string> parseCommand(const std::string& line, ParamMap& para
 ```cpp
 class UserManager {
 public:
-    // 添加新用户
-    bool addUser(const User& user, const std::string& curUser);
-    
-    // 用户登录
-    bool login(const std::string& username, const std::string& password);
-    
-    // 用户登出
-    bool logout(const std::string& username);
-    
-    // 查询用户信息
-    std::string queryProfile(const std::string& curUser, const std::string& username);
-    
-    // 修改用户信息
-    std::string modifyProfile(const std::string& curUser, const std::string& username, 
-                             const User& newInfo);
+  int addUser(const std::string& cur_username, const std::string& username,
+              const std::string& password, const std::string& name,
+              const std::string& mail_addr, const int& privilege);
+
+  int login(const std::string& username, const std::string& password);
+
+  int logout(const std::string& username);
+
+  sjtu::pair<int, UserProfile> queryProfile(const std::string& cur_username,
+                                            const std::string& username);
+
+  sjtu::pair<int, UserProfile> modifyProfile(const std::string& cur_username,
+                                             const std::string& username,
+                                             const std::string& password,
+                                             const std::string& name,
+                                             const std::string& mail_addr,
+                                             const int& privilege);
 };
 ```
 
@@ -326,7 +368,7 @@ public:
 
 ## 7. 容错与异常处理
 
-系统设计了完整的异常处理机制：
+系统设计了完整的异常处理机制(项目第一阶段不实现)：
 
 1. **输入验证**：严格验证用户输入的参数格式和合法性
 2. **权限检查**：所有操作进行权限验证，防止非法访问
