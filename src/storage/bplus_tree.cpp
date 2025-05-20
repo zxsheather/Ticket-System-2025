@@ -1,4 +1,5 @@
 #include "bplus_tree.hpp"
+#include "../model/user.hpp"
 
 template <class Key, class Value>
 void BPT<Key, Value>::insert(const Key& key, const Value& value) {
@@ -458,3 +459,5 @@ template <class Key, class Value>
 bool BPT<Key , Value>::exists(const Key& key){
   return !find(key).empty();
 }
+
+template class BPT<long long, User>;

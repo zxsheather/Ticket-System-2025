@@ -8,16 +8,16 @@ class UserManager {
  private:
   BPT<long long, User> user_db;
   // from username to privilege
-  sjtu::map<std::string, int> logged_in_users;
+  sjtu::map<std::string, int> logged_in_users{};
 
-  bool is_first_user;
+  bool is_first_user{false};
 
  public:
   UserManager();
 
   int addUser(const std::string& cur_username, const std::string& username,
               const std::string& password, const std::string& name,
-              const std::string& mailAddr, const std::string& privilege);
+              const std::string& mail_addr, const int& privilege);
 
   int login(const std::string& username, const std::string& password);
 
@@ -27,5 +27,9 @@ class UserManager {
                                             const std::string& username);
 
   sjtu::pair<int, UserProfile> modifyProfile(const std::string& cur_username,
-                                             const std::string& username);
+                                             const std::string& username,
+                                             const std::string& password,
+                                             const std::string& name,
+                                             const std::string& mail_addr,
+                                             const int& privilege);
 };

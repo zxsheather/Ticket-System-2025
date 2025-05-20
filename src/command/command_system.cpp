@@ -64,7 +64,7 @@ std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
   pos++;
   while (pos < cmd_line.size() && cmd_line[pos] == '-') {
     char key = cmd_line[pos + 1];
-    pos += 2;
+    pos += 3;
     std::string value;
     while (pos < cmd_line.size() && cmd_line[pos] != ' ') {
       value += cmd_line[pos];
