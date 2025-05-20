@@ -34,3 +34,7 @@ target_compile_options(${EXECUTABLE_NAME} PRIVATE
     -Wextra              # 启用额外警告
     -O2                  # 优化级别
 )
+# 输出可执行文件到项目根目录
+set_target_properties(${EXECUTABLE_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
