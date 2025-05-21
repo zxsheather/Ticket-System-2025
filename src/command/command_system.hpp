@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "../stl/map.hpp"
 
 class ParamMap {
  private:
@@ -24,8 +25,9 @@ class CommandHandler {
 
 class CommandSystem {
  private:
-  static const int MAX_HANDLERS = 128;
-  CommandHandler* handlers[MAX_HANDLERS];
+  sjtu::map<std::string, size_t> positions;
+  CommandHandler* handlers[30];
+  size_t handler_count{0};
 
  public:
   CommandSystem();

@@ -31,17 +31,16 @@ CommandSystem::CommandSystem() {
 }
 
 CommandSystem::~CommandSystem() {
-  for (int i = 0; i < MAX_HANDLERS; ++i) {
-    if (handlers[i]) {
-      delete handlers[i];
-    }
+  for (int i = 0; i < handler_count; ++i) {
+    delete handlers[i];
   }
 }
 
 void CommandSystem::registerHandler(const std::string& cmd_name,
                                     CommandHandler* handler) {
-  int hash = Hash::hashCommand(cmd_name, MAX_HANDLERS);
-  handlers[hash] = handler;
+  positions[cmd_name] = handler_count;
+  handlers[handler_count] = handler;
+  handler_count++;
 }
 
 std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
@@ -73,12 +72,11 @@ std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
     params.set(key, value);
     pos++;
   }
-
-  int hash = Hash::hashCommand(cmd_name, MAX_HANDLERS);
-  if (!handlers[hash]) {
-    std::cerr << cmd_name << " Not Implemented Yet\n";
+  if(positions.find(cmd_name) == positions.end()){
+    std::cerr << "Command not found: " << cmd_name << std::endl;
     return "bye";
   }
-  std::string result = handlers[hash]->execute(params);
+  size_t idx = positions[cmd_name];
+  std::string result = handlers[idx]->execute(params);
   return result;
 }
