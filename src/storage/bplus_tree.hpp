@@ -100,6 +100,9 @@ class BPT {
   bool empty();
   bool exists(const Key& key);
 
+  // special interface for key-one-value and value's ordering is up to key.
+  void update(const Key& key, const Value& new_value);
+
  private:
   std::string filename_;
   MemoryRiver<Index<Key, Value>, 2> index_file_;

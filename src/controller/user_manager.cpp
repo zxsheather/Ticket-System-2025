@@ -99,7 +99,7 @@ sjtu::pair<int, UserProfile> UserManager::modifyProfile(
   if (result.empty()) {
     return sjtu::pair{-1, UserProfile()};
   }
-  User user = result[0];
+  User& user = result[0];
   if (cur_privilege < user.privilege ||
       (cur_privilege == user.privilege && cur_username != username)) {
     return sjtu::pair{-1, UserProfile()};
@@ -120,8 +120,7 @@ sjtu::pair<int, UserProfile> UserManager::modifyProfile(
     }
   }
   // need further optimization
-  user_db.remove(username_hash, result[0]);
-  user_db.insert(username_hash, user);
+  user_db.update(username_hash, user);
 
   return sjtu::pair{0, UserProfile{
     username,

@@ -4,3 +4,6 @@ run-test
 build/
 .cache/
 code
+*.log
+*.index
+*.block
