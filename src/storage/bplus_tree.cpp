@@ -1,5 +1,7 @@
 #include "bplus_tree.hpp"
 #include "../model/user.hpp"
+#include "../model/train.hpp"
+#include "../model/seat.hpp"
 
 template <class Key, class Value>
 void BPT<Key, Value>::insert(const Key& key, const Value& value) {
@@ -494,6 +496,55 @@ void BPT<Key, Value>::update(const Key& key, const Value& new_value){
 }
 
 template <class Key, class Value>
+int BPT<Key, Value>::findLeafNode(const Key& key,
+                                  sjtu::vector<pathFrame<Key, Value>>& path) {
+  int ptr = root_;
+  path.clear();
+  if (ptr == -1) {
+    return -1;
+  }
+  for (int level = 1; level <= height_; level++) {
+    Index<Key, Value> node;
+    // index_file_.read(node, ptr);
+    cache_manager_.read_index(node, ptr);
+    int idx = (node.size == 0)
+                  ? 0
+                  : binarySearchForBigOrEqual(node.keys, key, 0, node.size - 1);
+    path.push_back({node, ptr, idx});
+    ptr = node.children[idx];
+  }
+  return ptr;
+}
+
+
+template <class Key, class Value>
+void BPT<Key, Value>::remove(const Key& key){
+  sjtu::vector<pathFrame<Key, Value>> path;
+  int leaf_addr = findLeafNode(key, path);
+  if (leaf_addr == -1) {
+    return;
+  }
+  Block<Key, Value> leaf;
+  // block_file_.read(leaf, leaf_addr);
+  cache_manager_.read_block(leaf, leaf_addr);
+  int pos = -1;
+  pos = leaf.size == 0 ? 0 : binarySearch(leaf.data, key, 0, leaf.size - 1);
+  if (pos >= leaf.size || leaf.data[pos].key != key) {
+    return;
+  }
+  for (int i = pos; i < leaf.size - 1; ++i) {
+    leaf.data[i] = leaf.data[i + 1];
+  }
+  leaf.size--;
+  if (leaf.size >= (DEFAULT_LEAF_SIZE + 1) / 3) {
+    // block_file_.update(leaf, leaf_addr);
+    cache_manager_.update_block(leaf, leaf_addr);
+    return;
+  }
+  balanceAfterRemove(leaf, leaf_addr, path);
+}
+
+template <class Key, class Value>
 bool BPT<Key, Value>::empty(){
   return root_ == -1;
 }
@@ -504,3 +555,6 @@ bool BPT<Key , Value>::exists(const Key& key){
 }
 
 template class BPT<long long, User>;
+template class BPT<long long, Train>;
+template class BPT<UniTrain, SeatMap>;
+template class BPT<long long, FixedString<20>>;

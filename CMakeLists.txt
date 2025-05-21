@@ -30,8 +30,8 @@ add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 # 添加编译选项（根据需要调整）
 target_compile_options(${EXECUTABLE_NAME} PRIVATE
-    -Wall                # 启用所有警告
-    -Wextra              # 启用额外警告
+    # -Wall                # 启用所有警告
+    # -Wextra              # 启用额外警告
     -O2                  # 优化级别
 )
 # 输出可执行文件到项目根目录

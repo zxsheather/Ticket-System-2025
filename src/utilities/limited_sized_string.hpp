@@ -63,4 +63,12 @@ struct FixedString {
     length = other.length;
     return *this;
   }
+
+  FixedString& operator+=(const char& other) {
+    if (length < N) {
+      string[length++] = other;
+      string[length] = '\0';
+    }
+    return *this;
+  }
 };
