@@ -4,8 +4,8 @@
 
 #include "command/command_system.hpp"
 #include "command/system_command.hpp"
-#include "command/user_command.hpp"
 #include "command/train_command.hpp"
+#include "command/user_command.hpp"
 
 int main() {
   CommandSystem command_system;
@@ -20,14 +20,14 @@ int main() {
   command_system.registerHandler("modify_profile",
                                  new ModifyProfileHandler(user_manager));
   command_system.registerHandler("exit", new ExitHandler());
-  command_system.registerHandler("add_train", new AddTrainHandler(train_manager));
+  command_system.registerHandler("add_train",
+                                 new AddTrainHandler(train_manager));
   command_system.registerHandler("delete_train",
                                  new DeleteTrainHandler(train_manager));
   command_system.registerHandler("release_train",
                                  new ReleaseTrainHandler(train_manager));
-  command_system.registerHandler("query_train",
-                                 new QueryTrainHandler(train_manager,
-                                                       seat_manager));
+  command_system.registerHandler(
+      "query_train", new QueryTrainHandler(train_manager, seat_manager));
 
   std::string line;
   while (getline(std::cin, line)) {

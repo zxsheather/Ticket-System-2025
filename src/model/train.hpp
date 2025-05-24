@@ -15,6 +15,18 @@ struct Date {
     result += std::to_string(day);
     return result;
   }
+  Date operator+(int days) const {
+    Date result = *this;
+    result.day += days;
+    while (result.day > days_in_month[result.month - 1]) {
+      result.day -= days_in_month[result.month - 1];
+      result.month++;
+      if (result.month > 12) {
+        result.month = 1;
+      }
+    }
+    return result;
+  }
 };
 
 struct Time {
@@ -26,6 +38,34 @@ struct Time {
     if (minute < 10) result += '0';
     result += std::to_string(minute);
     return result;
+  }
+  Time operator+(int minutes) const {
+    Time result = *this;
+    result.minute += minutes;
+    if (result.minute >= 60) {
+      result.hour += result.minute / 60;
+      result.minute %= 60;
+    }
+    return result;
+  }
+  Time operator+(const Time& other) const {
+    Time result = *this;
+    result.hour += other.hour;
+    result.minute += other.minute;
+    if (result.minute >= 60) {
+      result.hour += result.minute / 60;
+      result.minute %= 60;
+    }
+    return result;
+  }
+  Time operator+=(const Time& other) {
+    hour += other.hour;
+    minute += other.minute;
+    if (minute >= 60) {
+      hour += minute / 60;
+      minute %= 60;
+    }
+    return *this;
   }
 };
 
@@ -63,7 +103,11 @@ struct TimePoint {
     return *this > other || *this == other;
   }
 
-  TimePoint(const Date& date, const Time& time) : date(date), time(time) {}
+  TimePoint(const Date& date, const Time& time) {
+    this->date = date + time.hour / 24;
+    this->time.hour = time.hour % 24;
+    this->time.minute = time.minute;
+  }
 
   TimePoint operator+(const Time& other) const {
     TimePoint result = *this;
@@ -108,9 +152,11 @@ struct Train {
   FixedString<30> stations[MAX_STATION_NUM]{};
   int seat_num{};
   int prices[MAX_STATION_NUM - 1]{};
-  Time start_time{};
-  int travel_times[MAX_STATION_NUM - 1]{};
-  int stop_over_times[MAX_STATION_NUM - 2]{};
+  // Time start_time{};
+  //   int travel_times[MAX_STATION_NUM - 1]{};
+  //   int stop_over_times[MAX_STATION_NUM - 2]{};
+  Time arrival_times[MAX_STATION_NUM]{};
+  Time departure_times[MAX_STATION_NUM]{};
   Date sale_date_start{};
   Date sale_date_end{};
   char type{};
@@ -131,16 +177,16 @@ struct Train {
     return train_id >= other.train_id;
   }
 
-  void getTimeAll(TimePoint* arrival_time, TimePoint* departure_time,
-                  const Date& departure_day) const {
-    departure_time[0] = {departure_day, start_time};
-    for (int i = 1; i < station_num - 1; i++) {
-      arrival_time[i] = departure_time[i - 1] + travel_times[i - 1];
-      departure_time[i] = arrival_time[i] + stop_over_times[i - 1];
-    }
-    arrival_time[station_num - 1] =
-        departure_time[station_num - 2] + travel_times[station_num - 2];
-  }
+  //   void getTimeAll(TimePoint* arrival_time, TimePoint* departure_time,
+  //                   const Date& departure_day) const {
+  //     departure_time[0] = {departure_day, start_time};
+  //     for (int i = 1; i < station_num - 1; i++) {
+  //       arrival_time[i] = departure_time[i - 1] + travel_times[i - 1];
+  //       departure_time[i] = arrival_time[i] + stop_over_times[i - 1];
+  //     }
+  //     arrival_time[station_num - 1] =
+  //         departure_time[station_num - 2] + travel_times[station_num - 2];
+  //   }
 };
 
 struct UniTrain {

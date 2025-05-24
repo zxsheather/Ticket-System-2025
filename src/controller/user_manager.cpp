@@ -14,21 +14,21 @@ int UserManager::addUser(const std::string& cur_username,
                          const std::string& password, const std::string& name,
                          const std::string& mail_addr, const int& privilege) {
   long long username_hash = Hash::hashKey(username);
-  if(is_first_user){
+  if (is_first_user) {
     User user(username, password, name, mail_addr, 10);
     user_db.insert(username_hash, user);
     is_first_user = false;
     return 0;
   }
-  if(user_db.exists(username_hash)){
+  if (user_db.exists(username_hash)) {
     return -1;
   }
   auto iter = logged_in_users.find(cur_username);
-  if(iter == logged_in_users.end()){
+  if (iter == logged_in_users.end()) {
     return -1;
   }
   int cur_privilege = iter->second;
-  if(cur_privilege <= privilege){
+  if (cur_privilege <= privilege) {
     return -1;
   }
   User user(username, password, name, mail_addr, privilege);
@@ -115,17 +115,13 @@ sjtu::pair<int, UserProfile> UserManager::modifyProfile(
   }
   if (privilege != -1) {
     user.privilege = privilege;
-    if(cur_username == username){
+    if (cur_username == username) {
       logged_in_users[cur_username] = privilege;
     }
   }
   // need further optimization
   user_db.update(username_hash, user);
 
-  return sjtu::pair{0, UserProfile{
-    username,
-    user.name.toString(),
-    user.mail_addr.toString(),
-    user.privilege
-  }};
+  return sjtu::pair{0, UserProfile{username, user.name.toString(),
+                                   user.mail_addr.toString(), user.privilege}};
 }

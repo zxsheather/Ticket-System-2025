@@ -68,8 +68,8 @@ int binarySearchForBigOrEqual(Key* array, const Key& key, int left, int right) {
 }
 
 template <class Key, class Value>
-int binarySearchForBigOrEqual(Key_Value<Key, Value>* array,
-                               const Key& key, int left, int right) {
+int binarySearchForBigOrEqual(Key_Value<Key, Value>* array, const Key& key,
+                              int left, int right) {
   if (key < array[left].key) return left;
   if (key >= array[right].key) return right + 1;
 
@@ -122,7 +122,7 @@ class BPT {
 
   // special interface for key-one-value and value's ordering is up to key.
   void update(const Key& key, const Value& new_value);
-  // special interface for key-one-value 
+  // special interface for key-one-value
   void remove(const Key& key);
 
  private:
@@ -137,8 +137,7 @@ class BPT {
   int findLeafNode(const Key_Value<Key, Value>& key,
                    sjtu::vector<pathFrame<Key, Value>>& path);
 
-  int findLeafNode(const Key& key,
-                   sjtu::vector<pathFrame<Key, Value>>& path);
+  int findLeafNode(const Key& key, sjtu::vector<pathFrame<Key, Value>>& path);
 
   // insert key-value pair and return true if need split
   bool insertIntoLeaf(int leaf_addr, const Key& key, const Value& value,

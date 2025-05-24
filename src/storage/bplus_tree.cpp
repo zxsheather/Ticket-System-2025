@@ -1,7 +1,8 @@
 #include "bplus_tree.hpp"
-#include "../model/user.hpp"
-#include "../model/train.hpp"
+
 #include "../model/seat.hpp"
+#include "../model/train.hpp"
+#include "../model/user.hpp"
 
 template <class Key, class Value>
 void BPT<Key, Value>::insert(const Key& key, const Value& value) {
@@ -453,7 +454,7 @@ void BPT<Key, Value>::balanceInternalNode(
 }
 
 template <class Key, class Value>
-void BPT<Key, Value>::update(const Key& key, const Value& new_value){
+void BPT<Key, Value>::update(const Key& key, const Value& new_value) {
   size_t level = 1;
   int ptr = root_;
   if (ptr == -1) {
@@ -487,7 +488,7 @@ void BPT<Key, Value>::update(const Key& key, const Value& new_value){
     // block_file_.read(block, ptr);
     cache_manager_.read_block(block, ptr);
     idx = 0;
-  } 
+  }
   if (block.data[idx].key != key) {
     return;
   }
@@ -516,9 +517,8 @@ int BPT<Key, Value>::findLeafNode(const Key& key,
   return ptr;
 }
 
-
 template <class Key, class Value>
-void BPT<Key, Value>::remove(const Key& key){
+void BPT<Key, Value>::remove(const Key& key) {
   sjtu::vector<pathFrame<Key, Value>> path;
   int leaf_addr = findLeafNode(key, path);
   if (leaf_addr == -1) {
@@ -545,12 +545,12 @@ void BPT<Key, Value>::remove(const Key& key){
 }
 
 template <class Key, class Value>
-bool BPT<Key, Value>::empty(){
+bool BPT<Key, Value>::empty() {
   return root_ == -1;
 }
 
 template <class Key, class Value>
-bool BPT<Key , Value>::exists(const Key& key){
+bool BPT<Key, Value>::exists(const Key& key) {
   return !find(key).empty();
 }
 

@@ -1,14 +1,15 @@
-
+#pragma once
 #include "../model/train.hpp"
 #include "../storage/bplus_tree.hpp"
 
-class TrainManager{
+class TrainManager {
  private:
   BPT<long long, Train> train_db;
   BPT<long long, FixedString<20>> station_db;
+
  public:
   TrainManager();
-  
+
   int addTrain(const Train& train);
 
   int deleteTrain(const std::string& train_id);
@@ -17,4 +18,3 @@ class TrainManager{
 
   int queryTrain(const std::string& train_id, Train& train);
 };
-  

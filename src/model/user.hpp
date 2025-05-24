@@ -8,7 +8,7 @@ struct User {
   FixedString<30> mail_addr{};
   int privilege{};
 
-  User(){}
+  User() {}
 
   User(const std::string& username, const std::string& password,
        const std::string& name, const std::string& mail_addr,
@@ -18,7 +18,7 @@ struct User {
         name(name),
         mail_addr(mail_addr),
         privilege(privilege) {}
-  
+
   bool operator<(const User& other) const { return username < other.username; }
   bool operator>(const User& other) const { return username > other.username; }
   bool operator==(const User& other) const {

@@ -72,7 +72,7 @@ std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
     params.set(key, value);
     pos++;
   }
-  if(positions.find(cmd_name) == positions.end()){
+  if (positions.find(cmd_name) == positions.end()) {
     std::cerr << "Command not found: " << cmd_name << std::endl;
     return "bye";
   }

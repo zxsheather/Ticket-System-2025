@@ -3,8 +3,6 @@
 
 #include "../controller/user_manager.hpp"
 
-
-
 LoginHandler::LoginHandler(UserManager& manager) : user_manager(manager) {}
 
 std::string LoginHandler::execute(const ParamMap& params) {

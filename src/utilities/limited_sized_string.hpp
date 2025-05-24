@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <cstring>
+#include <string>
 
 template <size_t N>
 struct FixedString {
@@ -14,11 +14,9 @@ struct FixedString {
     length = other.length();
   }
 
-  std::string toString() const {
-    return std::string(string, length);
-  }
+  std::string toString() const { return std::string(string, length); }
 
-  int comparedToString(const std::string& other){
+  int comparedToString(const std::string& other) {
     if (length < other.length()) {
       return -1;
     } else if (length > other.length()) {

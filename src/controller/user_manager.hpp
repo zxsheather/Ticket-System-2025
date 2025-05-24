@@ -32,4 +32,11 @@ class UserManager {
                                              const std::string& name,
                                              const std::string& mail_addr,
                                              const int& privilege);
+  int isLoggedIn(const std::string& username) {
+    auto iter = logged_in_users.find(username);
+    if (iter == logged_in_users.end()) {
+      return -1;
+    }
+    return iter->second;
+  }
 };
