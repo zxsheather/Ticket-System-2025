@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "command/command_system.hpp"
+#include "command/order_command.hpp"
 #include "command/system_command.hpp"
 #include "command/train_command.hpp"
 #include "command/user_command.hpp"
@@ -34,6 +35,8 @@ int main() {
   command_system.registerHandler(
       "buy_ticket", new BuyTicketHandler(train_manager, seat_manager,
                                          user_manager, order_manager));
+  command_system.registerHandler(
+      "query_order", new QueryOrderHandler(order_manager, user_manager));
   std::string line;
   while (getline(std::cin, line)) {
     std::string timestamp;

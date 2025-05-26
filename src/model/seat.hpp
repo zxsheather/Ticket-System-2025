@@ -30,7 +30,7 @@ struct SeatMap {
       return false;
     }
     for (int i = start_station; i < end_station; i++) {
-      seat_num[i]--;
+      seat_num[i] -= seat;
     }
     return true;
   }

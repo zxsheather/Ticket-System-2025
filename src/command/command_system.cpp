@@ -3,8 +3,6 @@
 #include <cstring>
 #include <iostream>
 
-#include "../utilities/hash.hpp"
-
 ParamMap::ParamMap() {
   std::memset(exists, 0, sizeof(exists));
 }

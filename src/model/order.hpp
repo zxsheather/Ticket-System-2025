@@ -108,7 +108,7 @@ struct Order {
     result += train_id.toString() + ' ' + from.toString() + ' ' +
               start_time.toString() + " -> " + to.toString() + ' ' +
               end_time.toString() + ' ' + std::to_string(price) + ' ' +
-              std::to_string(ticket_num) + '\n';
+              std::to_string(ticket_num);
     return result;
   }
 };
