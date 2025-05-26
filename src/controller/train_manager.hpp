@@ -6,7 +6,8 @@
 class TrainManager {
  private:
   BPT<long long, Train> train_db;
-  BPT<UniStation, FixedString<20>> station_db;
+  BPT<FixedString<30>, FixedString<20>>
+      station_db;  // Maps station to train IDs
 
  public:
   TrainManager();
@@ -21,6 +22,5 @@ class TrainManager {
 
   int queryTrain(const FixedString<20>& train_id, Train& train);
 
-  sjtu::vector<FixedString<20>> queryStation(const std::string& station_id,
-                                             const Date& date);
+  sjtu::vector<FixedString<20>> queryStation(const std::string& station_id);
 };

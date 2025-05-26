@@ -562,4 +562,4 @@ template class BPT<UniTrain, SeatMap>;
 template class BPT<long long, FixedString<20>>;
 template class BPT<FixedString<20>, Order>;
 template class BPT<UniTrain, Order>;
-template class BPT<UniStation, FixedString<20>>;
+template class BPT<FixedString<30>, FixedString<20>>;

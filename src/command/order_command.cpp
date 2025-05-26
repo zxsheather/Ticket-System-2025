@@ -17,10 +17,11 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
   std::string start_station = params.get('s');
   std::string end_station = params.get('t');
   sjtu::vector<FixedString<20>> train_ids_from_start =
-      train_manager.queryStation(start_station, date);
+      train_manager.queryStation(start_station);
   sjtu::vector<FixedString<20>> train_ids_from_end =
-      train_manager.queryStation(end_station, date);
+      train_manager.queryStation(end_station);
   sjtu::vector<FixedString<20>> result;
+
   size_t i = 0, j = 0;
   while (true) {
     if (i >= train_ids_from_start.size() || j >= train_ids_from_end.size()) {
@@ -47,6 +48,12 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       int start_index = train.queryStationIndex(start_station);
       int end_index = train.queryStationIndex(end_station);
       if (start_index == -1 || end_index == -1 || start_index >= end_index) {
+        continue;
+      }
+      if (train.sale_date_start + train.departure_times[start_index].hour / 24 >
+              date ||
+          train.sale_date_end + train.departure_times[start_index].hour / 24 <
+              date) {
         continue;
       }
       date = date - train.departure_times[start_index].hour / 24;
@@ -77,6 +84,12 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       int start_index = train.queryStationIndex(start_station);
       int end_index = train.queryStationIndex(end_station);
       if (start_index == -1 || end_index == -1 || start_index >= end_index) {
+        continue;
+      }
+      if (train.sale_date_start + train.departure_times[start_index].hour / 24 >
+              date ||
+          train.sale_date_end + train.departure_times[start_index].hour / 24 <
+              date) {
         continue;
       }
       date = date - train.departure_times[start_index].hour / 24;

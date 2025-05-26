@@ -34,11 +34,7 @@ int TrainManager::releaseTrain(const std::string& train_id, Train& train) {
   train.is_released = true;
   train_db.update(hash, train);
   for (size_t i = 0; i < train.station_num; ++i) {
-    int extra_days = train.departure_times[i].hour / 24;
-    for (Date date = train.sale_date_start + extra_days;
-         date <= train.sale_date_end + extra_days; date = date + 1) {
-      station_db.insert(UniStation(train.stations[i], date), train.train_id);
-    }
+    station_db.insert(train.stations[i], train.train_id);
   }
   return 0;
 }
@@ -64,6 +60,6 @@ int TrainManager::queryTrain(const FixedString<20>& train_id, Train& train) {
 }
 
 sjtu::vector<FixedString<20>> TrainManager::queryStation(
-    const std::string& station_id, const Date& date) {
-  return station_db.find(UniStation(station_id, date));
+    const std::string& station_id) {
+  return station_db.find(station_id);
 }
