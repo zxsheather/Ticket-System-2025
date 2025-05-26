@@ -499,6 +499,27 @@ void BPT<Key, Value>::update(const Key& key, const Value& new_value) {
 }
 
 template <class Key, class Value>
+void BPT<Key, Value>::update(const Key& key, const Value& new_value,
+                             const Value& old_value) {
+  sjtu::vector<pathFrame<Key, Value>> path;
+  Key_Value<Key, Value> kv = Key_Value<Key, Value>{key, old_value};
+  int leaf_addr = findLeafNode(kv, path);
+  if (leaf_addr == -1) {
+    return;
+  }
+  Block<Key, Value> leaf;
+  // block_file_.read(leaf, leaf_addr);
+  cache_manager_.read_block(leaf, leaf_addr);
+  int pos = -1;
+  pos = leaf.size == 0 ? 0 : binarySearch(leaf.data, kv, 0, leaf.size - 1);
+  if (pos >= leaf.size || leaf.data[pos] != kv) {
+    return;
+  }
+  leaf.data[pos].value = new_value;
+  cache_manager_.update_block(leaf, leaf_addr);
+}
+
+template <class Key, class Value>
 int BPT<Key, Value>::findLeafNode(const Key& key,
                                   sjtu::vector<pathFrame<Key, Value>>& path) {
   int ptr = root_;

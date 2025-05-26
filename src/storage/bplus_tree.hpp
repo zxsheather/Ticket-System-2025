@@ -124,6 +124,8 @@ class BPT {
   void update(const Key& key, const Value& new_value);
   // special interface for key-one-value
   void remove(const Key& key);
+  // special interface for key-multiple-values, but value's ordering consistent
+  void update(const Key& key, const Value& new_value, const Value& old_value);
 
  private:
   std::string filename_;
