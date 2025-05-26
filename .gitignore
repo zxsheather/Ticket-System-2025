@@ -1,9 +1,12 @@
 testcases/
+test/
 run-test
 .vscode/
 build/
 .cache/
 code
+output.txt
+clean.sh
 *.log
 *.index
 *.block

@@ -77,6 +77,6 @@ std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
     return "bye";
   }
   size_t idx = positions[cmd_name];
-  std::string result = handlers[idx]->execute(params);
+  std::string result = handlers[idx]->execute(params, timestamp);
   return result;
 }

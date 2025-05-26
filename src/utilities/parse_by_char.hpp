@@ -1,3 +1,4 @@
+#pragma once
 #include <sstream>
 #include <string>
 
@@ -31,8 +32,9 @@ inline void parse_by_char_accumulate(const std::string& str, char delimiter,
   std::istringstream stream(str);
   std::string token;
   size_t pos = 0;
+  result[pos++] = 0;
   while (std::getline(stream, token, delimiter)) {
-    result[pos] = std::stoi(token) + (pos == 0 ? 0 : result[pos - 1]);
+    result[pos] = std::stoi(token) + result[pos - 1];
     pos++;
   }
 }

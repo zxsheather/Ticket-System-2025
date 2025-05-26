@@ -5,7 +5,8 @@
 
 LoginHandler::LoginHandler(UserManager& manager) : user_manager(manager) {}
 
-std::string LoginHandler::execute(const ParamMap& params) {
+std::string LoginHandler::execute(const ParamMap& params,
+                                  const std::string& timestamp) {
   std::string username = params.get('u');
   std::string password = params.get('p');
   int result = user_manager.login(username, password);
@@ -14,7 +15,8 @@ std::string LoginHandler::execute(const ParamMap& params) {
 
 AddUserHandler::AddUserHandler(UserManager& manager) : user_manager(manager) {}
 
-std::string AddUserHandler::execute(const ParamMap& params) {
+std::string AddUserHandler::execute(const ParamMap& params,
+                                    const std::string& timestamp) {
   std::string cur_username = params.has('c') ? params.get('c') : "";
   std::string username = params.get('u');
   std::string password = params.get('p');
@@ -28,7 +30,8 @@ std::string AddUserHandler::execute(const ParamMap& params) {
 
 LogoutHandler::LogoutHandler(UserManager& manager) : user_manager(manager) {}
 
-std::string LogoutHandler::execute(const ParamMap& params) {
+std::string LogoutHandler::execute(const ParamMap& params,
+                                   const std::string& timestamp) {
   std::string username = params.get('u');
   int result = user_manager.logout(username);
   return result == 0 ? "0" : "-1";
@@ -36,7 +39,8 @@ std::string LogoutHandler::execute(const ParamMap& params) {
 
 QueryProfileHandler::QueryProfileHandler(UserManager& manager)
     : user_manager(manager) {}
-std::string QueryProfileHandler::execute(const ParamMap& params) {
+std::string QueryProfileHandler::execute(const ParamMap& params,
+                                         const std::string& timestamp) {
   std::string cur_username = params.get('c');
   std::string username = params.get('u');
   auto result = user_manager.queryProfile(cur_username, username);
@@ -51,7 +55,8 @@ std::string QueryProfileHandler::execute(const ParamMap& params) {
 
 ModifyProfileHandler::ModifyProfileHandler(UserManager& manager)
     : user_manager(manager) {}
-std::string ModifyProfileHandler::execute(const ParamMap& params) {
+std::string ModifyProfileHandler::execute(const ParamMap& params,
+                                          const std::string& timestamp) {
   std::string cur_username = params.get('c');
   std::string username = params.get('u');
   std::string password = params.has('p') ? params.get('p') : "";

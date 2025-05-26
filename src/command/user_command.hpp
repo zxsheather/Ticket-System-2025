@@ -9,7 +9,8 @@ class LoginHandler : public CommandHandler {
 
  public:
   LoginHandler(UserManager& manager);
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
 };
 
 class AddUserHandler : public CommandHandler {
@@ -18,7 +19,8 @@ class AddUserHandler : public CommandHandler {
 
  public:
   AddUserHandler(UserManager& manager);
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
 };
 
 class LogoutHandler : public CommandHandler {
@@ -27,7 +29,8 @@ class LogoutHandler : public CommandHandler {
 
  public:
   LogoutHandler(UserManager& manager);
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
 };
 
 class QueryProfileHandler : public CommandHandler {
@@ -36,7 +39,8 @@ class QueryProfileHandler : public CommandHandler {
 
  public:
   QueryProfileHandler(UserManager& manager);
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
 };
 
 class ModifyProfileHandler : public CommandHandler {
@@ -45,5 +49,6 @@ class ModifyProfileHandler : public CommandHandler {
 
  public:
   ModifyProfileHandler(UserManager& manager);
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
 };

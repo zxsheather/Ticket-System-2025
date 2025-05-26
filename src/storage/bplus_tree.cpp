@@ -1,6 +1,8 @@
 #include "bplus_tree.hpp"
 
+#include "../model/order.hpp"
 #include "../model/seat.hpp"
+#include "../model/station.hpp"
 #include "../model/train.hpp"
 #include "../model/user.hpp"
 
@@ -558,3 +560,6 @@ template class BPT<long long, User>;
 template class BPT<long long, Train>;
 template class BPT<UniTrain, SeatMap>;
 template class BPT<long long, FixedString<20>>;
+template class BPT<FixedString<20>, Order>;
+template class BPT<UniTrain, Order>;
+template class BPT<UniStation, FixedString<20>>;

@@ -3,10 +3,12 @@
 
 class ExitHandler : public CommandHandler {
  public:
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
 };
 
 // class CleanHandler : public CommandHandler {
 //  public:
-//   std::string execute(const ParamMap& params) override;
+//   std::string execute(const ParamMap& params, const std::string& timestamp)
+//   override;
 // };

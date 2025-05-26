@@ -20,7 +20,8 @@ class ParamMap {
 
 class CommandHandler {
  public:
-  virtual std::string execute(const ParamMap& params) = 0;
+  virtual std::string execute(const ParamMap& params,
+                              const std::string& timestamp) = 0;
   virtual ~CommandHandler() {}
 };
 

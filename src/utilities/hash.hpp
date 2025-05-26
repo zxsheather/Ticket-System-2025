@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#include "limited_sized_string.hpp"
+
 class Hash {
  private:
   static const long long PR = 998244353;
@@ -18,6 +20,15 @@ class Hash {
   static long long hashKey(std::string s) {
     __int128_t hash = 0;
     for (char c : s) {
+      hash = (hash * PR + c + 1) % MOD;
+    }
+    return hash;
+  }
+
+  template <int N>
+  static long long hashKey(FixedString<N> s) {
+    __int128_t hash = 0;
+    for (char c : s.toString()) {
       hash = (hash * PR + c + 1) % MOD;
     }
     return hash;

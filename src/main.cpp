@@ -12,6 +12,7 @@ int main() {
   UserManager user_manager;
   TrainManager train_manager;
   SeatManager seat_manager;
+  OrderManager order_manager;
   command_system.registerHandler("login", new LoginHandler(user_manager));
   command_system.registerHandler("add_user", new AddUserHandler(user_manager));
   command_system.registerHandler("logout", new LogoutHandler(user_manager));
@@ -24,11 +25,15 @@ int main() {
                                  new AddTrainHandler(train_manager));
   command_system.registerHandler("delete_train",
                                  new DeleteTrainHandler(train_manager));
-  command_system.registerHandler("release_train",
-                                 new ReleaseTrainHandler(train_manager));
+  command_system.registerHandler(
+      "release_train", new ReleaseTrainHandler(train_manager, seat_manager));
   command_system.registerHandler(
       "query_train", new QueryTrainHandler(train_manager, seat_manager));
-
+  command_system.registerHandler(
+      "query_ticket", new QueryTicketHandler(train_manager, seat_manager));
+  command_system.registerHandler(
+      "buy_ticket", new BuyTicketHandler(train_manager, seat_manager,
+                                         user_manager, order_manager));
   std::string line;
   while (getline(std::cin, line)) {
     std::string timestamp;

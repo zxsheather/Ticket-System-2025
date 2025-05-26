@@ -283,7 +283,7 @@ class LoginHandler : public CommandHandler {
 
  public:
   LoginHandler(UserManager& manager);
-  std::string execute(const ParamMap& params) override;
+  std::string execute(const ParamMap& params, const std::string& timestamp) override;
 };
 ...
 ```
