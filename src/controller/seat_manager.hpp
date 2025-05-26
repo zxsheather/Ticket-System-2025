@@ -13,4 +13,7 @@ class SeatManager {
   SeatMap querySeat(const UniTrain& unitrain);
   int bookSeat(const UniTrain& unitrain, int start_station, int end_station,
                int seat, SeatMap& seat_map);
+
+  void releaseSeat(const UniTrain& unitrain, int start_station, int end_station,
+                   int seat, SeatMap& seat_map);
 };

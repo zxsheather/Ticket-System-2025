@@ -1,5 +1,7 @@
 #include "seat_manager.hpp"
 
+#include "../model/seat.hpp"
+
 SeatManager::SeatManager() : seat_db("seat") {}
 
 SeatMap SeatManager::querySeat(const UniTrain& unitrain) {
@@ -25,4 +27,10 @@ void SeatManager::initSeat(const Train& train) {
               train.seat_num);
     seat_db.insert(UniTrain(train.train_id, date), seat_map);
   }
+}
+
+void SeatManager::releaseSeat(const UniTrain& unitrain, int start_station,
+                              int end_station, int seat, SeatMap& seat_map) {
+  seat_map.releaseSeat(start_station, end_station, seat);
+  seat_db.update(unitrain, seat_map);
 }

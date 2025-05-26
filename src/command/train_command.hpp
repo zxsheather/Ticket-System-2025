@@ -65,3 +65,13 @@ class QueryTrainHandler : public CommandHandler {
   std::string execute(const ParamMap& params,
                       const std::string& timestamp) override;
 };
+
+class QueryTransferHandler : public CommandHandler {
+ private:
+  TrainManager& train_manager;
+
+ public:
+  QueryTransferHandler(TrainManager& train_manager);
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
+};

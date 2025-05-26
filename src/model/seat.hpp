@@ -35,6 +35,12 @@ struct SeatMap {
     return true;
   }
 
+  void releaseSeat(int start_station, int end_station, int seat) {
+    for (int i = start_station; i < end_station; i++) {
+      seat_num[i] += seat;
+    }
+  }
+
   bool operator<(const SeatMap& other) const {
     return total_seats < other.total_seats;
   }

@@ -33,9 +33,12 @@ enum OrderStatus { SUCCESS = 0, PENDING = 1, REFUNDED = 2 };
 struct Order {
   FixedString<20> username{};
   FixedString<20> train_id{};
+  Date origin_station_date{};
   FixedString<30> from{};
+  int start_station_index{};
   TimePoint start_time{};
   FixedString<30> to{};
+  int end_station_index{};
   TimePoint end_time{};
   int ticket_num{};
   int timestamp{};
@@ -43,15 +46,20 @@ struct Order {
   OrderStatus status{PENDING};
 
   Order() = default;
+
   Order(const std::string& username, const std::string& train_id,
-        const std::string& from, const TimePoint& start_time,
-        const std::string& to, const TimePoint& end_time, int ticket_num,
-        int timestamp, int price, OrderStatus status = PENDING)
+        const Date& origin_station_date, const std::string& from,
+        int start_station_index, const TimePoint& start_time,
+        const std::string& to, int end_station_index, const TimePoint& end_time,
+        int ticket_num, int timestamp, int price, OrderStatus status = PENDING)
       : username(username),
         train_id(train_id),
+        origin_station_date(origin_station_date),
         from(from),
+        start_station_index(start_station_index),
         start_time(start_time),
         to(to),
+        end_station_index(end_station_index),
         end_time(end_time),
         ticket_num(ticket_num),
         timestamp(timestamp),
@@ -59,14 +67,19 @@ struct Order {
         status(status) {}
 
   Order(const FixedString<20>& username, const FixedString<20>& train_id,
-        const FixedString<30>& from, const TimePoint& start_time,
-        const FixedString<30>& to, const TimePoint& end_time, int ticket_num,
-        int timestamp, int price, OrderStatus status = PENDING)
+        const Date& origin_station_date, const FixedString<30>& from,
+        int start_station_index, const TimePoint& start_time,
+        const FixedString<30>& to, int end_station_index,
+        const TimePoint& end_time, int ticket_num, int timestamp, int price,
+        OrderStatus status = PENDING)
       : username(username),
         train_id(train_id),
+        origin_station_date(origin_station_date),
         from(from),
+        start_station_index(start_station_index),
         start_time(start_time),
         to(to),
+        end_station_index(end_station_index),
         end_time(end_time),
         ticket_num(ticket_num),
         timestamp(timestamp),
@@ -96,13 +109,13 @@ struct Order {
     std::string result;
     switch (status) {
       case SUCCESS:
-        result += "success ";
+        result += "[success] ";
         break;
       case PENDING:
-        result += "pending ";
+        result += "[pending] ";
         break;
       case REFUNDED:
-        result += "refunded ";
+        result += "[refunded] ";
         break;
     }
     result += train_id.toString() + ' ' + from.toString() + ' ' +

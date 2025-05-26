@@ -37,6 +37,10 @@ int main() {
                                          user_manager, order_manager));
   command_system.registerHandler(
       "query_order", new QueryOrderHandler(order_manager, user_manager));
+
+  command_system.registerHandler(
+      "refund_ticket", new RefundTicketHandler(order_manager, user_manager,
+                                               train_manager, seat_manager));
   std::string line;
   while (getline(std::cin, line)) {
     std::string timestamp;

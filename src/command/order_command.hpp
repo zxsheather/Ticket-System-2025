@@ -82,3 +82,17 @@ class QueryOrderHandler : public CommandHandler {
   std::string execute(const ParamMap& params,
                       const std::string& timestamp) override;
 };
+
+class RefundTicketHandler : public CommandHandler {
+ private:
+  OrderManager& order_manager;
+  UserManager& user_manager;
+  TrainManager& train_manager;
+  SeatManager& seat_manager;
+
+ public:
+  RefundTicketHandler(OrderManager& order_manager, UserManager& user_manager,
+                      TrainManager& train_manager, SeatManager& seat_manager);
+  std::string execute(const ParamMap& params,
+                      const std::string& timestamp) override;
+};

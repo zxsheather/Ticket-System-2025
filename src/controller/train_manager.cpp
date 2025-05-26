@@ -1,7 +1,5 @@
 #include "train_manager.hpp"
 
-#include "../model/ticket.hpp"
-#include "../model/time.hpp"
 #include "../utilities/hash.hpp"
 
 TrainManager::TrainManager() : train_db("train"), station_db("station") {}

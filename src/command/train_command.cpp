@@ -92,7 +92,16 @@ std::string QueryTrainHandler::execute(const ParamMap& params,
     std::fill(seats, seats + train.station_num, train.seat_num);
     return format(train, seats, date);
   }
+  if (date > train.sale_date_end || date < train.sale_date_start) {
+    return "-1";
+  }
   UniTrain unitrain{train_id, date};
   SeatMap seat_map = seat_manager.querySeat(unitrain);
   return format(train, seat_map.seat_num, date);
 }
+
+QueryTransferHandler::QueryTransferHandler(TrainManager& train_manager)
+    : train_manager(train_manager) {}
+
+std::string QueryTransferHandler::execute(const ParamMap& params,
+                                          const std::string& timestamp)

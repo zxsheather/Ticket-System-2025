@@ -14,9 +14,9 @@ class OrderManager {
   void addPendingOrder(const Order& order);
   void updateOrderStatus(const std::string& username, const Order& order,
                          OrderStatus status);
+  void updateOrderStatus(const FixedString<20>& username, const Order& order,
+                         OrderStatus status);
+  void removeFromPending(const UniTrain& unitrain, const Order& order);
   sjtu::vector<Order> queryOrder(const std::string& username);
-  sjtu::vector<Order> queryPendingOrder(const std::string& train_id,
-                                        const Date& date);
-
-  int queryRefundedOrder(const std::string& username, const Order& order);
+  sjtu::vector<Order> queryPendingOrder(const UniTrain& unitrain);
 };
