@@ -69,9 +69,10 @@ class QueryTrainHandler : public CommandHandler {
 class QueryTransferHandler : public CommandHandler {
  private:
   TrainManager& train_manager;
+  SeatManager& seat_manager;
 
  public:
-  QueryTransferHandler(TrainManager& train_manager);
+  QueryTransferHandler(TrainManager& train_manager, SeatManager& seat_manager);
   std::string execute(const ParamMap& params,
                       const std::string& timestamp) override;
 };

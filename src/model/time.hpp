@@ -67,6 +67,13 @@ struct Time {
     result += std::to_string(minute);
     return result;
   }
+  Time() = default;
+  Time(int hour, int minute) : hour(hour), minute(minute) {
+    if (minute >= 60) {
+      hour += minute / 60;
+      minute %= 60;
+    }
+  }
   Time operator+(int minutes) const {
     Time result = *this;
     result.minute += minutes;
@@ -94,6 +101,27 @@ struct Time {
       minute %= 60;
     }
     return *this;
+  }
+  int operator-(const Time& other) const {
+    return (hour * 60 + minute) - (other.hour * 60 + other.minute);
+  }
+  bool operator<(const Time& other) const {
+    if (hour != other.hour) return hour < other.hour;
+    return minute < other.minute;
+  }
+  bool operator>(const Time& other) const {
+    if (hour != other.hour) return hour > other.hour;
+    return minute > other.minute;
+  }
+  bool operator==(const Time& other) const {
+    return hour == other.hour && minute == other.minute;
+  }
+  bool operator!=(const Time& other) const { return !(*this == other); }
+  bool operator<=(const Time& other) const {
+    return *this < other || *this == other;
+  }
+  bool operator>=(const Time& other) const {
+    return *this > other || *this == other;
   }
 };
 
@@ -135,6 +163,12 @@ struct TimePoint {
     this->date = date + time.hour / 24;
     this->time.hour = time.hour % 24;
     this->time.minute = time.minute;
+  }
+
+  TimePoint(const Date& date, int minutes) {
+    this->date = date + minutes / (24 * 60);
+    this->time.hour = (minutes / 60) % 24;
+    this->time.minute = minutes % 60;
   }
 
   TimePoint operator+(const Time& other) const {

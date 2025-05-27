@@ -4,6 +4,7 @@
 #include "../model/time.hpp"
 #include "../utilities/parse_by_char.hpp"
 #include "command_system.hpp"
+#include "ticket.hpp"
 
 AddTrainHandler::AddTrainHandler(TrainManager& manager)
     : train_manager(manager) {}
@@ -100,8 +101,144 @@ std::string QueryTrainHandler::execute(const ParamMap& params,
   return format(train, seat_map.seat_num, date);
 }
 
-QueryTransferHandler::QueryTransferHandler(TrainManager& train_manager)
-    : train_manager(train_manager) {}
+QueryTransferHandler::QueryTransferHandler(TrainManager& train_manager,
+                                           SeatManager& seat_manager)
+    : train_manager(train_manager), seat_manager(seat_manager) {}
 
 std::string QueryTransferHandler::execute(const ParamMap& params,
-                                          const std::string& timestamp)
+                                          const std::string& timestamp) {
+  std::string start_station = params.get('s');
+  std::string end_station = params.get('t');
+  std::string date_str = params.get('d');
+  bool is_time = params.has('p') ? params.get('p') == "time" : true;
+  Date date{std::stoi(date_str.substr(0, 2)), std::stoi(date_str.substr(3))};
+  sjtu::vector<FixedString<20>> train_ids_from_start =
+      train_manager.queryStation(start_station);
+  sjtu::vector<FixedString<20>> train_ids_from_end =
+      train_manager.queryStation(end_station);
+  sjtu::vector<Train> trains_to_end;
+  for (auto& train_id : train_ids_from_end) {
+    Train train;
+    train_manager.queryTrain(train_id, train);
+    if (train.sale_date_start > date + 6 || train.sale_date_end < date - 3) {
+      continue;
+    }
+    trains_to_end.push_back(train);
+  }
+  sjtu::vector<int> end_station_indices;
+  sjtu::vector<sjtu::map<FixedString<30>, int>> stations_valid_from_end;
+  for (auto& train : trains_to_end) {
+    sjtu::map<FixedString<30>, int> valid_stations;
+    int end_index = train.queryStationIndex(end_station);
+    for (int i = 0; i < end_index; ++i) {
+      valid_stations[train.stations[i]] = i;
+    }
+    end_station_indices.push_back(end_index);
+    stations_valid_from_end.push_back(valid_stations);
+  }
+  int min_price = 0x3f3f3f3f;
+  int min_time = 0x3f3f3f3f;
+  TicketInfo ticket1, ticket2;
+  int final_start_index, final_transfer_index_from_start,
+      final_transfer_index_from_end, final_end_index;
+  for (auto& train_id : train_ids_from_start) {
+    Train train;
+    train_manager.queryTrain(train_id, train);
+    int start_index = train.queryStationIndex(start_station);
+    if (start_index == -1 ||
+        train.sale_date_start + train.departure_times[start_index].hour / 24 >
+            date ||
+        train.sale_date_end + train.departure_times[start_index].hour / 24 <
+            date) {
+      continue;
+    }
+    TimePoint start_time(date, train.departure_times[start_index]);
+    Date origin_date1 = date - train.departure_times[start_index].hour / 24;
+    for (size_t i = start_index + 1; i < train.station_num; ++i) {
+      TimePoint arrival_time(date, train.arrival_times[i]);
+      for (size_t j = 0; j < trains_to_end.size(); ++j) {
+        auto& end_train = trains_to_end[j];
+        auto iter = stations_valid_from_end[j].find(train.stations[i]);
+        if (iter == stations_valid_from_end[j].end()) {
+          continue;
+        }
+        int end_transfer_index = iter->second;
+        TimePoint sale_date_start_timepoint(
+            end_train.sale_date_start,
+            end_train.departure_times[end_transfer_index]);
+        TimePoint sale_date_end_timepoint(
+            end_train.sale_date_end,
+            end_train.departure_times[end_transfer_index]);
+        if (sale_date_end_timepoint < arrival_time) {
+          continue;
+        }
+        TimePoint departure_from_transfer;
+        TimePoint arrive_at_end_station;
+        Date origin_date2;
+        if (sale_date_start_timepoint >= arrival_time) {
+          origin_date2 = end_train.sale_date_start;
+        } else {
+          Time transfer_departure_point(
+              end_train.departure_times[end_transfer_index].hour % 24,
+              end_train.departure_times[end_transfer_index].minute);
+          if (arrival_time.time <= transfer_departure_point) {
+            origin_date2 =
+                arrival_time.date -
+                end_train.departure_times[end_transfer_index].hour / 24;
+          } else {
+            origin_date2 =
+                arrival_time.date -
+                end_train.departure_times[end_transfer_index].hour / 24 + 1;
+          }
+        }
+        departure_from_transfer = TimePoint(
+            origin_date2, end_train.departure_times[end_transfer_index]);
+        arrive_at_end_station = TimePoint(
+            origin_date2, end_train.arrival_times[end_station_indices[j]]);
+        int travel_time = arrive_at_end_station - start_time;
+        int travel_price = end_train.prices[end_station_indices[j]] -
+                           end_train.prices[end_transfer_index] +
+                           train.prices[i] - train.prices[start_index];
+        bool time_minor =
+            travel_time < min_time ||
+            (travel_time == min_time && travel_price < min_price) ||
+            (travel_time == min_time && travel_price == min_price &&
+             ticket1.train_id > train.train_id);
+        bool price_minor =
+            travel_price < min_price ||
+            (travel_price == min_price && travel_time < min_time) ||
+            (travel_time == min_time && travel_price == min_price &&
+             ticket1.train_id > train.train_id);
+        if ((is_time && time_minor) || (!is_time && price_minor)) {
+          min_price = travel_price;
+          min_time = travel_time;
+          final_start_index = start_index;
+          final_end_index = end_station_indices[j];
+          final_transfer_index_from_start = j;
+          final_transfer_index_from_end = end_transfer_index;
+          ticket1 = TicketInfo(train.train_id, start_station, train.stations[i],
+                               start_time, arrival_time, origin_date1,
+                               train.prices[i], 1);
+          ticket2 = TicketInfo(end_train.train_id, train.stations[i],
+                               end_station, departure_from_transfer,
+                               arrive_at_end_station, origin_date2,
+                               train.prices[end_station_indices[j]] -
+                                   train.prices[end_transfer_index],
+                               1);
+        }
+      }
+    }
+  }
+  if (min_time == 0x3f3f3f3f) {
+    return "0";
+  }
+  SeatMap seat_map1 =
+      seat_manager.querySeat(UniTrain(ticket1.train_id, ticket1.origin_date));
+  SeatMap seat_map2 =
+      seat_manager.querySeat(UniTrain(ticket2.train_id, ticket2.origin_date));
+  ticket1.seats = seat_map1.queryAvailableSeat(final_start_index,
+                                               final_transfer_index_from_start);
+  ticket2.seats = seat_map2.queryAvailableSeat(final_transfer_index_from_end,
+                                               final_end_index);
+  return ticket1.format() + '\n' + ticket2.format();
+}

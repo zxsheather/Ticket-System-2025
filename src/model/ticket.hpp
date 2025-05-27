@@ -9,6 +9,7 @@ struct TicketInfo {
   FixedString<30> to{};
   TimePoint start_time{};
   TimePoint end_time{};
+  Date origin_date{};
   int price{};
   int seats{};
   int minutes{};
@@ -16,24 +17,28 @@ struct TicketInfo {
   TicketInfo() = default;
   TicketInfo(const FixedString<20>& train_id, const FixedString<30>& from,
              const FixedString<30>& to, const TimePoint& start_time,
-             const TimePoint& end_time, int price, int seats)
+             const TimePoint& end_time, const Date& origin_date, int price,
+             int seats)
       : train_id(train_id),
         from(from),
         to(to),
         start_time(start_time),
         end_time(end_time),
+        origin_date(origin_date),
         price(price),
         seats(seats),
         minutes(end_time - start_time) {}
 
   TicketInfo(const FixedString<20>& train_id, const std::string& from,
              const std::string& to, const TimePoint& start_time,
-             const TimePoint& end_time, int price, int seats)
+             const TimePoint& end_time, const Date& origin_date, int price,
+             int seats)
       : train_id(train_id),
         from(from),
         to(to),
         start_time(start_time),
         end_time(end_time),
+        origin_date(origin_date),
         price(price),
         seats(seats),
         minutes(end_time - start_time) {}
@@ -44,5 +49,14 @@ struct TicketInfo {
                          end_time.toString() + ' ' + std::to_string(price) +
                          ' ' + std::to_string(seats);
     return result;
+  }
+};
+
+struct TransferTicketInfo {
+  TicketInfo first_ticket{};
+  TicketInfo second_ticket{};
+
+  std::string format() const {
+    return first_ticket.format() + '\n' + second_ticket.format();
   }
 };

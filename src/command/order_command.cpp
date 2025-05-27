@@ -60,7 +60,7 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       TicketInfo ticket_info(
           train_id, start_station, end_station,
           TimePoint(date, train.departure_times[start_index]),
-          TimePoint(date, train.arrival_times[end_index]),
+          TimePoint(date, train.arrival_times[end_index]), date,
           train.prices[end_index] - train.prices[start_index],
           seat_manager.querySeat(UniTrain(train_id, date))
               .queryAvailableSeat(start_index, end_index));
@@ -96,7 +96,7 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       TicketInfo ticket_info(
           train_id, start_station, end_station,
           TimePoint(date, train.departure_times[start_index]),
-          TimePoint(date, train.arrival_times[end_index]),
+          TimePoint(date, train.arrival_times[end_index]), date,
           train.prices[end_index] - train.prices[start_index],
           seat_manager.querySeat(UniTrain(train_id, date))
               .queryAvailableSeat(start_index, end_index));
