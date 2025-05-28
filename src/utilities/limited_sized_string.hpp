@@ -7,7 +7,7 @@ struct FixedString {
   char string[N + 1];
   size_t length;
 
-  FixedString() : length(0) {}
+  FixedString() : length(0) { memset(string, 0, N + 1); }
 
   FixedString(const std::string& other) {
     strcpy(string, other.c_str());
