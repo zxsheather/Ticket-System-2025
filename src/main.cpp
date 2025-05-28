@@ -1,7 +1,7 @@
 // acmoj: 1867
 // The entrance for the program
 
-#include <chrono>
+// #include <chrono>
 #include <iostream>
 
 #include "command/command_system.hpp"
@@ -61,42 +61,43 @@ int main() {
   while (getline(std::cin, line)) {
     std::string timestamp;
     std::string cmd_name;
-    auto start_time = std::chrono::high_resolution_clock::now();
+    // auto start_time = std::chrono::high_resolution_clock::now();
     command_system.parseAndExecute(line, timestamp, cmd_name);
-    auto end_time = std::chrono::high_resolution_clock::now();
-    long long elapsed_time =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(end_time -
-                                                             start_time)
-            .count();
-    if (cmd_name == "query_ticket") {
-      query_ticket_time += elapsed_time;
-    } else if (cmd_name == "buy_ticket") {
-      buy_ticket_time += elapsed_time;
-    } else if (cmd_name == "query_order") {
-      query_order_time += elapsed_time;
-    } else if (cmd_name == "refund_ticket") {
-      refund_ticket_time += elapsed_time;
-    } else if (cmd_name == "query_transfer") {
-      query_transfer_time += elapsed_time;
-    } else if (cmd_name == "query_train") {
-      query_train_time += elapsed_time;
-    } else if (cmd_name == "query_profile") {
-      query_profile_time += elapsed_time;
-    } else if (cmd_name == "exit") {
-      std::cerr << "Query Profile Time: " << query_profile_time / 1000000.0
-                << " ms\n";
-      std::cerr << "Query Ticket Time: " << query_ticket_time / 1000000.0
-                << " ms\n";
-      std::cerr << "Buy Ticket Time: " << buy_ticket_time / 1000000.0
-                << " ms\n";
-      std::cerr << "Query Order Time: " << query_order_time / 1000000.0
-                << " ms\n";
-      std::cerr << "Refund Ticket Time: " << refund_ticket_time / 1000000.0
-                << " ms\n";
-      std::cerr << "Query Transfer Time: " << query_transfer_time / 1000000.0
-                << " ms\n";
-      std::cerr << "Query Train Time: " << query_train_time / 1000000.0
-                << " ms\n";
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // long long elapsed_time =
+    //     std::chrono::duration_cast<std::chrono::nanoseconds>(end_time -
+    //                                                          start_time)
+    //         .count();
+    // if (cmd_name == "query_ticket") {
+    //   query_ticket_time += elapsed_time;
+    // } else if (cmd_name == "buy_ticket") {
+    //   buy_ticket_time += elapsed_time;
+    // } else if (cmd_name == "query_order") {
+    //   query_order_time += elapsed_time;
+    // } else if (cmd_name == "refund_ticket") {
+    //   refund_ticket_time += elapsed_time;
+    // } else if (cmd_name == "query_transfer") {
+    //   query_transfer_time += elapsed_time;
+    // } else if (cmd_name == "query_train") {
+    //   query_train_time += elapsed_time;
+    // } else if (cmd_name == "query_profile") {
+    //   query_profile_time += elapsed_time;
+    // } else
+    if (cmd_name == "exit") {
+      // std::cerr << "Query Profile Time: " << query_profile_time / 1000000.0
+      //           << " ms\n";
+      // std::cerr << "Query Ticket Time: " << query_ticket_time / 1000000.0
+      //           << " ms\n";
+      // std::cerr << "Buy Ticket Time: " << buy_ticket_time / 1000000.0
+      //           << " ms\n";
+      // std::cerr << "Query Order Time: " << query_order_time / 1000000.0
+      //           << " ms\n";
+      // std::cerr << "Refund Ticket Time: " << refund_ticket_time / 1000000.0
+      //           << " ms\n";
+      // std::cerr << "Query Transfer Time: " << query_transfer_time / 1000000.0
+      //           << " ms\n";
+      // std::cerr << "Query Train Time: " << query_train_time / 1000000.0
+      //           << " ms\n";
       break;
     }
   }
