@@ -18,27 +18,11 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
   Date date{std::stoi(date_str.substr(0, 2)), std::stoi(date_str.substr(3))};
   std::string start_station = params.get('s');
   std::string end_station = params.get('t');
-  sjtu::vector<FixedString<20>> train_ids_from_start =
-      train_manager.queryStation(start_station);
-  sjtu::vector<FixedString<20>> train_ids_from_end =
-      train_manager.queryStation(end_station);
-  sjtu::vector<FixedString<20>> result;
+  sjtu::vector<FixedString<20>> result = train_manager.queryRoute(
+      {std::move(start_station), std::move(end_station)});
 
   size_t i = 0, j = 0;
-  while (true) {
-    if (i >= train_ids_from_start.size() || j >= train_ids_from_end.size()) {
-      break;
-    }
-    if (train_ids_from_start[i] == train_ids_from_end[j]) {
-      result.push_back(train_ids_from_start[i]);
-      i++;
-      j++;
-    } else if (train_ids_from_start[i] < train_ids_from_end[j]) {
-      i++;
-    } else {
-      j++;
-    }
-  }
+
   ComparisonOrder order =
       params.has('p') ? (params.get('p') == "time" ? TIME : COST) : TIME;
 
@@ -58,7 +42,7 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
         continue;
       }
       TicketInfo ticket_info(
-          train_id, start_station, end_station,
+          train_id, std::move(start_station), std::move(end_station),
           TimePoint(origin_date, train.departure_times[start_index]),
           TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
           train.prices[end_index] - train.prices[start_index],
@@ -93,7 +77,7 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
         continue;
       }
       TicketInfo ticket_info(
-          train_id, start_station, end_station,
+          train_id, std::move(start_station), std::move(end_station),
           TimePoint(origin_date, train.departure_times[start_index]),
           TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
           train.prices[end_index] - train.prices[start_index],
@@ -157,16 +141,17 @@ std::string BuyTicketHandler::execute(const ParamMap& params,
   if (start_date < train.sale_date_start || start_date > train.sale_date_end) {
     return "-1";
   }
-  SeatMap seat_map = seat_manager.querySeat(UniTrain(train_id, start_date));
+  UniTrain unitrain(train_id, start_date);
+  SeatMap seat_map = seat_manager.querySeat(unitrain);
   if (ticket_num > train.seat_num) {
     return "-1";
   }
-  int booked =
-      seat_manager.bookSeat(UniTrain(train_id, start_date), start_index,
-                            end_index, ticket_num, seat_map);
+  int booked = seat_manager.bookSeat(unitrain, start_index, end_index,
+                                     ticket_num, seat_map);
   if (booked == -1) {
     if (wait) {
-      Order order(username, train_id, start_date, start_station, start_index,
+      Order order(std::move(username), std::move(train_id), start_date,
+                  start_station, start_index,
                   TimePoint(start_date, train.departure_times[start_index]),
                   end_station, end_index,
                   TimePoint(start_date, train.arrival_times[end_index]),
@@ -180,7 +165,8 @@ std::string BuyTicketHandler::execute(const ParamMap& params,
     }
   } else {
     int price = train.prices[end_index] - train.prices[start_index];
-    Order order(username, train_id, start_date, start_station, start_index,
+    Order order(std::move(username), std::move(train_id), start_date,
+                start_station, start_index,
                 TimePoint(start_date, train.departure_times[start_index]),
                 end_station, end_index,
                 TimePoint(start_date, train.arrival_times[end_index]),

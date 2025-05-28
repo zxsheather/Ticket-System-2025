@@ -43,8 +43,8 @@ void CommandSystem::registerHandler(const std::string& cmd_name,
 }
 
 std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
-                                           std::string& timestamp) {
-  std::string cmd_name;
+                                           std::string& timestamp,
+                                           std::string& cmd_name) {
   ParamMap params;
 
   size_t pos = 1;
