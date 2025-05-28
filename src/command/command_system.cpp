@@ -42,9 +42,9 @@ void CommandSystem::registerHandler(const std::string& cmd_name,
   handler_count++;
 }
 
-std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
-                                           std::string& timestamp,
-                                           std::string& cmd_name) {
+void CommandSystem::parseAndExecute(const std::string& cmd_line,
+                                    std::string& timestamp,
+                                    std::string& cmd_name) {
   ParamMap params;
 
   size_t pos = 1;
@@ -73,9 +73,8 @@ std::string CommandSystem::parseAndExecute(const std::string& cmd_line,
   }
   if (positions.find(cmd_name) == positions.end()) {
     std::cerr << "Command not found: " << cmd_name << std::endl;
-    return "bye";
+    exit(1);
   }
   size_t idx = positions[cmd_name];
-  std::string result = handlers[idx]->execute(params, timestamp);
-  return result;
+  handlers[idx]->execute(params, timestamp);
 }

@@ -10,8 +10,9 @@
 
 AddTrainHandler::AddTrainHandler(TrainManager& manager)
     : train_manager(manager) {}
-std::string AddTrainHandler::execute(const ParamMap& params,
-                                     const std::string& timestamp) {
+void AddTrainHandler::execute(const ParamMap& params,
+                              const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   Train train;
   train.train_id = params.get('i');
   train.station_num = std::stoi(params.get('n'));
@@ -50,73 +51,77 @@ std::string AddTrainHandler::execute(const ParamMap& params,
   train.sale_date_end.day = std::stoi(sale_date_str.substr(9, 2));
   train.type = params.get('y')[0];
   int result = train_manager.addTrain(train);
-  // for debugging
-  // if(train.train_id.toString() == "LeavesofGrass") {
-  //   std::cerr << train.format() << std::endl;
-  // }
-
-  return std::to_string(result);
+  std::cout << result << '\n';
 };
 
 DeleteTrainHandler::DeleteTrainHandler(TrainManager& manager)
     : train_manager(manager) {}
-std::string DeleteTrainHandler::execute(const ParamMap& params,
-                                        const std::string& timestamp) {
+void DeleteTrainHandler::execute(const ParamMap& params,
+                                 const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string train_id = params.get('i');
   int result = train_manager.deleteTrain(train_id);
-  return std::to_string(result);
+  std::cout << result << '\n';
 };
 
 ReleaseTrainHandler::ReleaseTrainHandler(TrainManager& manager,
                                          SeatManager& seat_manager)
     : train_manager(manager), seat_manager(seat_manager) {}
-std::string ReleaseTrainHandler::execute(const ParamMap& params,
-                                         const std::string& timestamp) {
+void ReleaseTrainHandler::execute(const ParamMap& params,
+                                  const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string train_id = params.get('i');
   Train train;
   int result = train_manager.releaseTrain(train_id, train);
   if (result == -1) {
-    return "-1";
+    std::cout << "-1\n";
+    return;
   }
   seat_manager.initSeat(train);
-  return std::to_string(result);
+  std::cout << "0\n";
 };
 
 QueryTrainHandler::QueryTrainHandler(TrainManager& train_manager,
                                      SeatManager& seat_manager)
     : train_manager(train_manager), seat_manager(seat_manager) {}
-std::string QueryTrainHandler::execute(const ParamMap& params,
-                                       const std::string& timestamp) {
+void QueryTrainHandler::execute(const ParamMap& params,
+                                const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string train_id = params.get('i');
   std::string date_str = params.get('d');
   Date date{std::stoi(date_str.substr(0, 2)), std::stoi(date_str.substr(3))};
   Train train;
   int result = train_manager.queryTrain(train_id, train);
   if (result == -1) {
-    return "-1";
+    std::cout << "-1\n";
+    return;
   }
   if (date < train.sale_date_start || date > train.sale_date_end) {
-    return "-1";
+    std::cout << "-1\n";
+    return;
   }
   if (!train.is_released) {
     int seats[MAX_STATION_NUM];
     std::fill(seats, seats + train.station_num, train.seat_num);
-    return format(train, seats, date);
+    std::cout << format(train, seats, date) << '\n';
+    return;
   }
   if (date > train.sale_date_end || date < train.sale_date_start) {
-    return "-1";
+    std::cout << "-1\n";
+    return;
   }
   UniTrain unitrain{train_id, date};
   SeatMap seat_map = seat_manager.querySeat(unitrain);
-  return format(train, seat_map.seat_num, date);
+  std::cout << format(train, seat_map.seat_num, date) << '\n';
 }
 
 QueryTransferHandler::QueryTransferHandler(TrainManager& train_manager,
                                            SeatManager& seat_manager)
     : train_manager(train_manager), seat_manager(seat_manager) {}
 
-std::string QueryTransferHandler::execute(const ParamMap& params,
-                                          const std::string& timestamp) {
+void QueryTransferHandler::execute(const ParamMap& params,
+                                   const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string start_station = params.get('s');
   std::string end_station = params.get('t');
   std::string date_str = params.get('d');
@@ -130,9 +135,6 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
   for (const auto& train_id : train_ids_from_end) {
     Train train;
     train_manager.queryTrain(train_id, train);
-    // if (train.sale_date_start > date + 6 || train.sale_date_end < date - 3) {
-    //   continue;
-    // }
     trains_to_end.push_back(train);
   }
   sjtu::vector<int> end_station_indices;
@@ -243,7 +245,8 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
     }
   }
   if (min_time == 0x3f3f3f3f) {
-    return "0";
+    std::cout << "0\n";
+    return;
   }
   SeatMap seat_map1 =
       seat_manager.querySeat(UniTrain(ticket1.train_id, ticket1.origin_date));
@@ -253,5 +256,5 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
                                                final_transfer_index_from_start);
   ticket2.seats = seat_map2.queryAvailableSeat(final_transfer_index_from_end,
                                                final_end_index);
-  return ticket1.format() + '\n' + ticket2.format();
+  std::cout << ticket1.format() << '\n' << ticket2.format() << '\n';
 }

@@ -20,8 +20,8 @@ class ParamMap {
 
 class CommandHandler {
  public:
-  virtual std::string execute(const ParamMap& params,
-                              const std::string& timestamp) = 0;
+  virtual void execute(const ParamMap& params,
+                       const std::string& timestamp) = 0;
   virtual ~CommandHandler() {}
 };
 
@@ -37,6 +37,6 @@ class CommandSystem {
 
   void registerHandler(const std::string& cmd_name, CommandHandler* handler);
 
-  std::string parseAndExecute(const std::string& cmd_line,
-                              std::string& timestamp, std::string& cmd_name);
+  void parseAndExecute(const std::string& cmd_line, std::string& timestamp,
+                       std::string& cmd_name);
 };
