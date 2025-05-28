@@ -32,8 +32,8 @@ int TrainManager::releaseTrain(const std::string& train_id, Train& train) {
   }
   for (size_t i = 0; i < train.station_num - 1; ++i) {
     for (size_t j = i + 1; j < train.station_num; ++j) {
-      Route route{std::move(train.stations[i]), std::move(train.stations[j])};
-      route_db.insert(route, train.train_id);
+      Route route{train.stations[i], train.stations[j]};
+      route_db.insert(route, train);
     }
   }
   return 0;
@@ -67,6 +67,6 @@ sjtu::vector<FixedString<20>> TrainManager::queryStation(
   return station_db.find(station_id);
 }
 
-sjtu::vector<FixedString<20>> TrainManager::queryRoute(const Route& route) {
+sjtu::vector<Train> TrainManager::queryRoute(const Route& route) {
   return route_db.find(route);
 }

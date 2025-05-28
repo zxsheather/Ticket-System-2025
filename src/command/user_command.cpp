@@ -1,22 +1,25 @@
-
 #include "user_command.hpp"
+
+#include <iostream>
 
 #include "../controller/user_manager.hpp"
 
 LoginHandler::LoginHandler(UserManager& manager) : user_manager(manager) {}
 
-std::string LoginHandler::execute(const ParamMap& params,
-                                  const std::string& timestamp) {
+void LoginHandler::execute(const ParamMap& params,
+                           const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string username = params.get('u');
   std::string password = params.get('p');
   int result = user_manager.login(username, password);
-  return result == 0 ? "0" : "-1";
+  std::cout << result << '\n';
 }
 
 AddUserHandler::AddUserHandler(UserManager& manager) : user_manager(manager) {}
 
-std::string AddUserHandler::execute(const ParamMap& params,
-                                    const std::string& timestamp) {
+void AddUserHandler::execute(const ParamMap& params,
+                             const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string cur_username = params.has('c') ? params.get('c') : "";
   std::string username = params.get('u');
   std::string password = params.get('p');
@@ -25,38 +28,41 @@ std::string AddUserHandler::execute(const ParamMap& params,
   int privilege = params.has('g') ? std::stoi(params.get('g')) : -1;
   int result = user_manager.addUser(cur_username, username, password, name,
                                     mail_addr, privilege);
-  return result == 0 ? "0" : "-1";
+  std::cout << result << '\n';
 }
 
 LogoutHandler::LogoutHandler(UserManager& manager) : user_manager(manager) {}
 
-std::string LogoutHandler::execute(const ParamMap& params,
-                                   const std::string& timestamp) {
+void LogoutHandler::execute(const ParamMap& params,
+                            const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string username = params.get('u');
   int result = user_manager.logout(username);
-  return result == 0 ? "0" : "-1";
+  std::cout << result << '\n';
 }
 
 QueryProfileHandler::QueryProfileHandler(UserManager& manager)
     : user_manager(manager) {}
-std::string QueryProfileHandler::execute(const ParamMap& params,
-                                         const std::string& timestamp) {
+void QueryProfileHandler::execute(const ParamMap& params,
+                                  const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string cur_username = params.get('c');
   std::string username = params.get('u');
   auto result = user_manager.queryProfile(cur_username, username);
   if (result.first == -1) {
-    return "-1";
+    std::cout << "-1\n";
   } else {
-    return result.second.username + " " + result.second.name + " " +
-           result.second.mail_addr + " " +
-           std::to_string(result.second.privilege);
+    std::cout << result.second.username << " " << result.second.name << " "
+              << result.second.mail_addr << " " << result.second.privilege
+              << '\n';
   }
 }
 
 ModifyProfileHandler::ModifyProfileHandler(UserManager& manager)
     : user_manager(manager) {}
-std::string ModifyProfileHandler::execute(const ParamMap& params,
-                                          const std::string& timestamp) {
+void ModifyProfileHandler::execute(const ParamMap& params,
+                                   const std::string& timestamp) {
+  std::cout << '[' << timestamp << "] ";
   std::string cur_username = params.get('c');
   std::string username = params.get('u');
   std::string password = params.has('p') ? params.get('p') : "";
@@ -66,10 +72,10 @@ std::string ModifyProfileHandler::execute(const ParamMap& params,
   auto result = user_manager.modifyProfile(cur_username, username, password,
                                            name, mail_addr, privilege);
   if (result.first == -1) {
-    return "-1";
+    std::cout << "-1\n";
   } else {
-    return result.second.username + " " + result.second.name + " " +
-           result.second.mail_addr + " " +
-           std::to_string(result.second.privilege);
+    std::cout << result.second.username << " " << result.second.name << " "
+              << result.second.mail_addr << " " << result.second.privilege
+              << '\n';
   }
 }
