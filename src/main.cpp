@@ -9,6 +9,7 @@
 #include "command/user_command.hpp"
 
 int main() {
+  // freopen("test/seat_basic.in", "r", stdin);
   CommandSystem command_system;
   UserManager user_manager;
   TrainManager train_manager;

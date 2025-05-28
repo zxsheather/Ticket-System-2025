@@ -52,6 +52,29 @@ struct Train {
     }
     return -1;
   }
+
+  // for debugging
+  // std::string format() const {
+  //   std::string result = train_id.toString() + ' ' + type + '\n';
+  //   result += stations[0].toString() + " xx-xx xx:xx -> " +
+  //             TimePoint{sale_date_start, departure_times[0]}.toString() + " 0
+  //             " + std::to_string(seat_num) + '\n';
+  //   for (int i = 1; i < station_num - 1; ++i) {
+  //     result += stations[i].toString() + ' ' +
+  //               TimePoint{sale_date_start, arrival_times[i]}.toString() +
+  //               " -> " +
+  //               TimePoint{sale_date_start, departure_times[i]}.toString() + "
+  //               " + std::to_string(prices[i]) + " " +
+  //               std::to_string(seat_num) +
+  //               '\n';
+  //   }
+  //   result += stations[station_num - 1].toString() + ' ' +
+  //             TimePoint{sale_date_start, arrival_times[station_num - 1]}
+  //                 .toString() +
+  //             " -> xx-xx xx:xx " +
+  //             std::to_string(prices[station_num - 1]) + " x";
+  //   return result;
+  //   }
 };
 
 struct UniTrain {

@@ -5,7 +5,7 @@
 
 class TrainManager {
  private:
-  BPT<long long, Train> train_db;
+  BPT<FixedString<20>, Train> train_db;
   BPT<FixedString<30>, FixedString<20>>
       station_db;  // Maps station to train IDs
 

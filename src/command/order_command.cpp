@@ -1,5 +1,7 @@
 #include "order_command.hpp"
 
+#include <iostream>
+
 #include "../controller/seat_manager.hpp"
 #include "../model/ticket.hpp"
 #include "../model/time.hpp"
@@ -50,25 +52,24 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       if (start_index == -1 || end_index == -1 || start_index >= end_index) {
         continue;
       }
-      if (train.sale_date_start + train.departure_times[start_index].hour / 24 >
-              date ||
-          train.sale_date_end + train.departure_times[start_index].hour / 24 <
-              date) {
+      Date origin_date = date - train.departure_times[start_index].hour / 24;
+      if (origin_date < train.sale_date_start ||
+          origin_date > train.sale_date_end) {
         continue;
       }
-      date = date - train.departure_times[start_index].hour / 24;
       TicketInfo ticket_info(
           train_id, start_station, end_station,
-          TimePoint(date, train.departure_times[start_index]),
-          TimePoint(date, train.arrival_times[end_index]), date,
+          TimePoint(origin_date, train.departure_times[start_index]),
+          TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
           train.prices[end_index] - train.prices[start_index],
-          seat_manager.querySeat(UniTrain(train_id, date))
+          seat_manager.querySeat(UniTrain(train_id, origin_date))
               .queryAvailableSeat(start_index, end_index));
       pq.push(ticket_info);
     }
     if (pq.empty()) {
       return "0";
     }
+
     std::string result_str = std::to_string(pq.size()) + "\n";
     while (!pq.empty()) {
       result_str += pq.top().format();
@@ -86,21 +87,25 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       if (start_index == -1 || end_index == -1 || start_index >= end_index) {
         continue;
       }
-      if (train.sale_date_start + train.departure_times[start_index].hour / 24 >
-              date ||
-          train.sale_date_end + train.departure_times[start_index].hour / 24 <
-              date) {
+      Date origin_date = date - train.departure_times[start_index].hour / 24;
+      if (origin_date < train.sale_date_start ||
+          origin_date > train.sale_date_end) {
         continue;
       }
-      date = date - train.departure_times[start_index].hour / 24;
       TicketInfo ticket_info(
           train_id, start_station, end_station,
-          TimePoint(date, train.departure_times[start_index]),
-          TimePoint(date, train.arrival_times[end_index]), date,
+          TimePoint(origin_date, train.departure_times[start_index]),
+          TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
           train.prices[end_index] - train.prices[start_index],
-          seat_manager.querySeat(UniTrain(train_id, date))
+          seat_manager.querySeat(UniTrain(train_id, origin_date))
               .queryAvailableSeat(start_index, end_index));
       pq.push(ticket_info);
+      // if(train.train_id.toString() =="LeavesofGrass" && origin_date ==
+      // Date{7,2}){
+      //   SeatMap seat_map = seat_manager.querySeat(UniTrain(train_id,
+      //   origin_date)); std::cerr << '[' << timestamp << ']' << format(train,
+      //   seat_map.seat_num, origin_date) << std::endl;
+      // }
     }
     if (pq.empty()) {
       return "0";
@@ -111,6 +116,7 @@ std::string QueryTicketHandler::execute(const ParamMap& params,
       pq.pop();
       if (!pq.empty()) result_str += "\n";
     }
+
     return result_str;
   }
 }
@@ -147,24 +153,25 @@ std::string BuyTicketHandler::execute(const ParamMap& params,
   if (start_index == -1 || end_index == -1 || start_index >= end_index) {
     return "-1";
   }
-  date = date - train.departure_times[start_index].hour / 24;
-  if (date < train.sale_date_start || date > train.sale_date_end) {
+  Date start_date = date - train.departure_times[start_index].hour / 24;
+  if (start_date < train.sale_date_start || start_date > train.sale_date_end) {
     return "-1";
   }
-  SeatMap seat_map = seat_manager.querySeat(UniTrain(train_id, date));
+  SeatMap seat_map = seat_manager.querySeat(UniTrain(train_id, start_date));
   if (ticket_num > train.seat_num) {
     return "-1";
   }
-  int booked = seat_manager.bookSeat(UniTrain(train_id, date), start_index,
-                                     end_index, ticket_num, seat_map);
+  int booked =
+      seat_manager.bookSeat(UniTrain(train_id, start_date), start_index,
+                            end_index, ticket_num, seat_map);
   if (booked == -1) {
     if (wait) {
-      Date start_date = date - train.departure_times[start_index].hour / 24;
       Order order(username, train_id, start_date, start_station, start_index,
-                  TimePoint(date, train.departure_times[start_index]),
+                  TimePoint(start_date, train.departure_times[start_index]),
                   end_station, end_index,
-                  TimePoint(date, train.arrival_times[end_index]), ticket_num,
-                  std::stoi(timestamp), 0, PENDING);
+                  TimePoint(start_date, train.arrival_times[end_index]),
+                  ticket_num, std::stoi(timestamp),
+                  train.prices[end_index] - train.prices[start_index], PENDING);
       order_manager.addOrder(order);
       order_manager.addPendingOrder(order);
       return "queue";
@@ -173,13 +180,18 @@ std::string BuyTicketHandler::execute(const ParamMap& params,
     }
   } else {
     int price = train.prices[end_index] - train.prices[start_index];
-    Date start_date = date - train.departure_times[start_index].hour / 24;
     Order order(username, train_id, start_date, start_station, start_index,
-                TimePoint(date, train.departure_times[start_index]),
+                TimePoint(start_date, train.departure_times[start_index]),
                 end_station, end_index,
-                TimePoint(date, train.arrival_times[end_index]), ticket_num,
-                std::stoi(timestamp), price, SUCCESS);
+                TimePoint(start_date, train.arrival_times[end_index]),
+                ticket_num, std::stoi(timestamp), price, SUCCESS);
     order_manager.addOrder(order);
+    // if(train.train_id.toString() =="LeavesofGrass" && start_date ==
+    // Date{7,2}){
+    //   SeatMap seat_map = seat_manager.querySeat(UniTrain(train_id,
+    //   start_date)); std::cerr << '[' << timestamp << ']' << format(train,
+    //   seat_map.seat_num, start_date) << std::endl;
+    // }
     return std::to_string(price * ticket_num);
   }
 }
@@ -223,10 +235,14 @@ std::string RefundTicketHandler::execute(const ParamMap& params,
   }
   int order_id = params.has('n') ? std::stoi(params.get('n')) : 1;
   sjtu::vector<Order> orders = order_manager.queryOrder(username);
-  if (orders.size() < order_id) {
+  if (orders.size() < order_id || order_id <= 0) {
     return "-1";
   }
-  Order& order = orders[order_id - 1];
+  Order& order = orders[orders.size() - order_id];
+  // std::cerr << '[' << timestamp << ']' << username << std::endl;
+  // for(auto& o : orders) {
+  //   std::cerr << o.timestamp<<o.format() << std::endl;
+  // }
   if (order.status == REFUNDED) {
     return "-1";
   }
@@ -244,34 +260,41 @@ std::string RefundTicketHandler::execute(const ParamMap& params,
   int start_index = train.queryStationIndex(order.from);
   int end_index = train.queryStationIndex(order.to);
   Date date = order.origin_station_date;
-  SeatMap seat_map = seat_manager.querySeat(UniTrain(order.train_id, date));
-  seat_manager.releaseSeat(UniTrain(order.train_id, date), start_index,
-                           end_index, order.ticket_num, seat_map);
+  UniTrain unitrain(order.train_id, date);
+  SeatMap seat_map = seat_manager.querySeat(unitrain);
+  seat_manager.releaseSeat(unitrain, start_index, end_index, order.ticket_num,
+                           seat_map);
   order_manager.updateOrderStatus(username, order, REFUNDED);
   sjtu::vector<Order> pending_orders =
-      order_manager.queryPendingOrder(UniTrain(order.train_id, date));
+      order_manager.queryPendingOrder(unitrain);
   if (pending_orders.empty()) {
     return "0";
   }
+  // if(train.train_id.toString() == "LeavesofGrass" && date == Date{7,2}) {
+  //     std::cerr << '[' << timestamp << ']' << format(train,
+  //     seat_map.seat_num, date) << std::endl;
+  // }
   sjtu::vector<Order> need_to_remove;
   for (auto& pending_order : pending_orders) {
-    if (pending_order.start_station_index > end_index ||
-        pending_order.end_station_index < start_index) {
+    if (pending_order.start_station_index >= end_index ||
+        pending_order.end_station_index <= start_index) {
       continue;
     }
-    int booked = seat_manager.bookSeat(UniTrain(pending_order.train_id, date),
-                                       pending_order.start_station_index,
-                                       pending_order.end_station_index,
-                                       pending_order.ticket_num, seat_map);
+    int booked = seat_manager.bookSeat(
+        unitrain, pending_order.start_station_index,
+        pending_order.end_station_index, pending_order.ticket_num, seat_map);
     if (booked == 0) {
       order_manager.updateOrderStatus(pending_order.username, pending_order,
                                       SUCCESS);
       need_to_remove.push_back(pending_order);
+      // if(train.train_id.toString() == "LeavesofGrass" && date == Date{7,2}) {
+      //   std::cerr << '[' << timestamp << ']' << format(train,
+      //   seat_map.seat_num, date) << std::endl;
+      // }
     }
   }
   for (int i = (int)need_to_remove.size() - 1; i >= 0; --i) {
-    order_manager.removeFromPending(UniTrain(need_to_remove[i].train_id, date),
-                                    need_to_remove[i]);
+    order_manager.removeFromPending(unitrain, need_to_remove[i]);
   }
   return "0";
 }

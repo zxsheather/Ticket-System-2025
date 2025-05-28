@@ -18,7 +18,7 @@ struct SeatMap {
 
   bool isSeatAvailable(int start_station, int end_station, int seat) {
     for (int i = start_station; i < end_station; i++) {
-      if (seat_num[i] <= seat) {
+      if (seat_num[i] < seat) {
         return false;
       }
     }
@@ -41,17 +41,16 @@ struct SeatMap {
     }
   }
 
+  bool operator==(const SeatMap& other) const {
+    return total_seats == other.total_seats;
+  }
+
+  bool operator!=(const SeatMap& other) const { return !(*this == other); }
   bool operator<(const SeatMap& other) const {
     return total_seats < other.total_seats;
   }
   bool operator>(const SeatMap& other) const {
     return total_seats > other.total_seats;
-  }
-  bool operator==(const SeatMap& other) const {
-    return total_seats == other.total_seats;
-  }
-  bool operator!=(const SeatMap& other) const {
-    return total_seats != other.total_seats;
   }
   bool operator<=(const SeatMap& other) const {
     return total_seats <= other.total_seats;

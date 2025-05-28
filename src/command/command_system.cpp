@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <string>
 
 ParamMap::ParamMap() {
   std::memset(exists, 0, sizeof(exists));

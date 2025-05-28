@@ -180,8 +180,8 @@ struct TimePoint {
       result.time.minute -= 60;
     }
     if (result.time.hour >= 24) {
-      result.date.day++;
-      result.time.hour -= 24;
+      result.date.day += result.time.hour / 24;
+      result.time.hour %= 24;
     }
     while (result.date.day > days_in_month[result.date.month - 1]) {
       result.date.day -= days_in_month[result.date.month - 1];
@@ -206,15 +206,17 @@ struct TimePoint {
     }
     return result;
   }
+
   int operator-(const TimePoint& other) const {
-    int days = 0;
-    if (date.month != other.date.month) {
-      days += (date.month - other.date.month) * 30;
-    }
-    if (date.day != other.date.day) {
-      days += date.day - other.date.day;
-    }
-    return days * 24 * 60 + (time.hour - other.time.hour) * 60 +
-           (time.minute - other.time.minute);
+    auto to_minutes = [](const TimePoint& tp) -> int {
+      int total = 0;
+      for (int m = 1; m < tp.date.month; ++m) {
+        total += days_in_month[m - 1] * 24 * 60;
+      }
+      total += (tp.date.day - 1) * 24 * 60;
+      total += tp.time.hour * 60 + tp.time.minute;
+      return total;
+    };
+    return to_minutes(*this) - to_minutes(other);
   }
 };

@@ -578,7 +578,7 @@ bool BPT<Key, Value>::exists(const Key& key) {
 }
 
 template class BPT<long long, User>;
-template class BPT<long long, Train>;
+template class BPT<FixedString<20>, Train>;
 template class BPT<UniTrain, SeatMap>;
 template class BPT<long long, FixedString<20>>;
 template class BPT<FixedString<20>, Order>;

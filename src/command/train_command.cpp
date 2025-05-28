@@ -1,10 +1,12 @@
 #include "train_command.hpp"
 
+#include <iostream>
+
 #include "../controller/seat_manager.hpp"
+#include "../model/ticket.hpp"
 #include "../model/time.hpp"
 #include "../utilities/parse_by_char.hpp"
 #include "command_system.hpp"
-#include "ticket.hpp"
 
 AddTrainHandler::AddTrainHandler(TrainManager& manager)
     : train_manager(manager) {}
@@ -48,6 +50,11 @@ std::string AddTrainHandler::execute(const ParamMap& params,
   train.sale_date_end.day = std::stoi(sale_date_str.substr(9, 2));
   train.type = params.get('y')[0];
   int result = train_manager.addTrain(train);
+  // for debugging
+  // if(train.train_id.toString() == "LeavesofGrass") {
+  //   std::cerr << train.format() << std::endl;
+  // }
+
   return std::to_string(result);
 };
 
@@ -88,6 +95,9 @@ std::string QueryTrainHandler::execute(const ParamMap& params,
   if (result == -1) {
     return "-1";
   }
+  if (date < train.sale_date_start || date > train.sale_date_end) {
+    return "-1";
+  }
   if (!train.is_released) {
     int seats[MAX_STATION_NUM];
     std::fill(seats, seats + train.station_num, train.seat_num);
@@ -120,9 +130,9 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
   for (auto& train_id : train_ids_from_end) {
     Train train;
     train_manager.queryTrain(train_id, train);
-    if (train.sale_date_start > date + 6 || train.sale_date_end < date - 3) {
-      continue;
-    }
+    // if (train.sale_date_start > date + 6 || train.sale_date_end < date - 3) {
+    //   continue;
+    // }
     trains_to_end.push_back(train);
   }
   sjtu::vector<int> end_station_indices;
@@ -152,12 +162,15 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
             date) {
       continue;
     }
-    TimePoint start_time(date, train.departure_times[start_index]);
     Date origin_date1 = date - train.departure_times[start_index].hour / 24;
+    TimePoint start_time(origin_date1, train.departure_times[start_index]);
     for (size_t i = start_index + 1; i < train.station_num; ++i) {
-      TimePoint arrival_time(date, train.arrival_times[i]);
+      TimePoint arrival_time(origin_date1, train.arrival_times[i]);
       for (size_t j = 0; j < trains_to_end.size(); ++j) {
         auto& end_train = trains_to_end[j];
+        if (end_train.train_id == train.train_id) {
+          continue;
+        }
         auto iter = stations_valid_from_end[j].find(train.stations[i]);
         if (iter == stations_valid_from_end[j].end()) {
           continue;
@@ -214,16 +227,16 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
           min_time = travel_time;
           final_start_index = start_index;
           final_end_index = end_station_indices[j];
-          final_transfer_index_from_start = j;
+          final_transfer_index_from_start = i;
           final_transfer_index_from_end = end_transfer_index;
           ticket1 = TicketInfo(train.train_id, start_station, train.stations[i],
                                start_time, arrival_time, origin_date1,
-                               train.prices[i], 1);
+                               train.prices[i] - train.prices[start_index], 1);
           ticket2 = TicketInfo(end_train.train_id, train.stations[i],
                                end_station, departure_from_transfer,
                                arrive_at_end_station, origin_date2,
-                               train.prices[end_station_indices[j]] -
-                                   train.prices[end_transfer_index],
+                               end_train.prices[end_station_indices[j]] -
+                                   end_train.prices[end_transfer_index],
                                1);
         }
       }
