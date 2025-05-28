@@ -110,3 +110,27 @@ struct UniTrain {
     return *this > other || *this == other;
   }
 };
+
+struct Route {
+  FixedString<30> from{};
+  FixedString<30> to{};
+
+  bool operator<(const Route& other) const {
+    if (from != other.from) return from < other.from;
+    return to < other.to;
+  }
+  bool operator>(const Route& other) const {
+    if (from != other.from) return from > other.from;
+    return to > other.to;
+  }
+  bool operator==(const Route& other) const {
+    return from == other.from && to == other.to;
+  }
+  bool operator!=(const Route& other) const { return !(*this == other); }
+  bool operator<=(const Route& other) const {
+    return *this < other || *this == other;
+  }
+  bool operator>=(const Route& other) const {
+    return *this > other || *this == other;
+  }
+};

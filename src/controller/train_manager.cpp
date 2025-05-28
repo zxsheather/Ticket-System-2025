@@ -1,6 +1,7 @@
 #include "train_manager.hpp"
 
-TrainManager::TrainManager() : train_db("train"), station_db("station") {}
+TrainManager::TrainManager()
+    : train_db("train"), station_db("station"), route_db("route") {}
 int TrainManager::addTrain(const Train& train) {
   if (train_db.exists(train.train_id)) {
     return -1;
@@ -29,6 +30,12 @@ int TrainManager::releaseTrain(const std::string& train_id, Train& train) {
   for (size_t i = 0; i < train.station_num; ++i) {
     station_db.insert(train.stations[i], train.train_id);
   }
+  for (size_t i = 0; i < train.station_num - 1; ++i) {
+    for (size_t j = i + 1; j < train.station_num; ++j) {
+      Route route{std::move(train.stations[i]), std::move(train.stations[j])};
+      route_db.insert(route, train.train_id);
+    }
+  }
   return 0;
 }
 
@@ -53,4 +60,13 @@ int TrainManager::queryTrain(const FixedString<20>& train_id, Train& train) {
 sjtu::vector<FixedString<20>> TrainManager::queryStation(
     const std::string& station_id) {
   return station_db.find(station_id);
+}
+
+sjtu::vector<FixedString<20>> TrainManager::queryStation(
+    const FixedString<30>& station_id) {
+  return station_db.find(station_id);
+}
+
+sjtu::vector<FixedString<20>> TrainManager::queryRoute(const Route& route) {
+  return route_db.find(route);
 }

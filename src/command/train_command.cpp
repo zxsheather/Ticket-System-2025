@@ -127,7 +127,7 @@ std::string QueryTransferHandler::execute(const ParamMap& params,
   sjtu::vector<FixedString<20>> train_ids_from_end =
       train_manager.queryStation(end_station);
   sjtu::vector<Train> trains_to_end;
-  for (auto& train_id : train_ids_from_end) {
+  for (const auto& train_id : train_ids_from_end) {
     Train train;
     train_manager.queryTrain(train_id, train);
     // if (train.sale_date_start > date + 6 || train.sale_date_end < date - 3) {

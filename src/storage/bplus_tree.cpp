@@ -584,3 +584,4 @@ template class BPT<long long, FixedString<20>>;
 template class BPT<FixedString<20>, Order>;
 template class BPT<UniTrain, Order>;
 template class BPT<FixedString<30>, FixedString<20>>;
+template class BPT<Route, FixedString<20>>;

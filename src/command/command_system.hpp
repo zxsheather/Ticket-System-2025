@@ -38,5 +38,5 @@ class CommandSystem {
   void registerHandler(const std::string& cmd_name, CommandHandler* handler);
 
   std::string parseAndExecute(const std::string& cmd_line,
-                              std::string& timestamp);
+                              std::string& timestamp, std::string& cmd_name);
 };
