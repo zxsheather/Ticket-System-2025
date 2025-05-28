@@ -4,9 +4,12 @@ run-test
 .vscode/
 build/
 .cache/
+performance_analysis_*/
 code
 output.txt
 clean.sh
 *.log
 *.index
 *.block
+run-test-valgrind
+generate-performance-visualization

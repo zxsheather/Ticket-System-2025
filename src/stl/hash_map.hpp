@@ -3,7 +3,7 @@
 
 #include "vector.hpp"
 
-constexpr size_t MAX_BUCKETS = 8941;
+constexpr size_t MAX_BUCKETS = 177;
 namespace sjtu {
 
 template <class Key, class Value>

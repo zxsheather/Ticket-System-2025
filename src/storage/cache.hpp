@@ -176,7 +176,7 @@ class BPTCacheManager {
  public:
   BPTCacheManager(MemoryRiver<Index<Key, Value>, 2>& index_file,
                   MemoryRiver<Block<Key, Value>, 2>& block_file,
-                  size_t index_cache_size = 10, size_t block_cache_size = 20)
+                  size_t index_cache_size = 5, size_t block_cache_size = 5)
       : index_file_(index_file),
         block_file_(block_file),
         index_cache_(index_cache_size),
