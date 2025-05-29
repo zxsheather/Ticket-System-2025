@@ -202,6 +202,9 @@ class vector {
       new (data_ + i) T(other.data_[i]);
     }
   }
+  vector(size_t n) : size_(0), capacity_(n) {
+    data_ = reinterpret_cast<T*>(::operator new(sizeof(T) * capacity_));
+  }
   /**
    * TODO Destructor
    */
