@@ -28,11 +28,11 @@ void QueryTicketHandler::execute(const ParamMap& params,
       params.has('p') ? (params.get('p') == "time" ? TIME : COST) : TIME;
 
   TicketInfo tickets[1000];
-  int idx = 0;
+  int idx = 0, tot = 0;
   TicketOrder ticket_order[1000];
 
+  Train train;
   for (auto& train_id : result) {
-    Train train;
     train_manager.queryTrain(train_id, train);
     int start_index = train.queryStationIndex(start_station);
     int end_index = train.queryStationIndex(end_station);

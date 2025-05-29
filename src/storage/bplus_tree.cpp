@@ -18,7 +18,7 @@ void BPT<Key, Value>::insert(const Key& key, const Value& value) {
     int head_ = block_file_.write(new_block);
     // int head_ = cache_manager_.write_block(new_block);
     root_ = head_;
-    block_file_.write_info(head_, 1);
+    // block_file_.write_info(head_, 1);
     // index_file_.write_info(root_, 1);
     height_ = 0;
     return;
