@@ -51,7 +51,7 @@ int TrainManager::queryTrain(const FixedString<20>& train_id, Train& train) {
   if (result.empty()) {
     return -1;
   }
-  train = result[0];
+  train = std::move(result[0]);
   return 0;
 }
 
