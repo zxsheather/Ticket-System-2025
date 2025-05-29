@@ -107,6 +107,7 @@ struct Train {
     Date sale_date_end;                     // 售票结束日期
     char type;                              // 列车类型
     bool is_released;                       // 是否已发布
+    int seat_map_pos;                     // 座位图位置(在seat.memoryriver中的偏移量)
 };
 
 // 时间相关数据结构
@@ -114,13 +115,14 @@ struct Date {
     int month, day;
     std::string toString() const;
     Date operator+(int days) const;
+    ... // 其他日期操作方法
 };
 
 struct Time {
     int hour, minute;
     std::string toString() const;
     Time operator+(int minutes) const;
-    Time operator+(const Time& other) const;
+    ... // 其他时间操作方法
 };
 
 struct TimePoint {
@@ -129,7 +131,7 @@ struct TimePoint {
     std::string toString() const;
     TimePoint operator+(const Time& other) const;
     TimePoint operator+(int minutes) const;
-    // 比较运算符 <, >, ==, !=, <=, >=
+    ... // 其他时间点操作方法
 };
 
 // 车次+日期的复合键，用于座位管理
@@ -142,19 +144,64 @@ struct UniTrain {
 
 #### 3.2.3 座位管理数据结构
 
+**当前实现的座位管理**：
+
 ```cpp
 struct SeatMap {
     int total_seats;                      // 总座位数
-    int station_num;                      // 站点数量
+    int station_num;                      // 站点数量  
     int seat_num[MAX_STATION_NUM];        // 各区间剩余座位数量
     
-    // 检查指定区间是否有足够座位
-    bool is_seat_available(int start_station, int end_station, int seat);
+    // 查询可用座位数量
+    int queryAvailableSeat(int start_station, int end_station);
     
-    // 预订座位，直接减少各区间的座位数
-    bool book_seat(int start_station, int end_station, int seat);
+    // 检查座位是否可用
+    bool isSeatAvailable(int start_station, int end_station, int seat);
+    
+    // 预订座位方法（在seat.hpp中实现）
+    bool bookSeat(int start_station, int end_station, int seat);
+    
+    // 释放座位方法
+    void releaseSeat(int start_station, int end_station, int seat);
+    
+    // 比较运算符
+    bool operator==(const SeatMap& other) const;
+    bool operator!=(const SeatMap& other) const;
+    bool operator<(const SeatMap& other) const;
+    bool operator>(const SeatMap& other) const;
+    bool operator<=(const SeatMap& other) const;
+    bool operator>=(const SeatMap& other) const;
 };
 ```
+
+**SeatManager实现**（位于`controller/seat_manager.cpp`）：
+```cpp
+class SeatManager {
+private:
+    MemoryRiver<SeatMap> seat_db;  // 使用MemoryRiver进行座位存储
+
+public:
+    // 查询座位分布
+    SeatMap querySeat(int start_pos, int& seat_map_pos, int date_from_sale_start);
+    
+    // 预订座位
+    int bookSeat(int seat_map_pos, int start_station, int end_station, 
+                 int seat, SeatMap& seat_map);
+    
+    // 初始化座位
+    void initSeat(const Train& train, int& train_seat);
+    
+    // 释放座位
+    void releaseSeat(int seat_map_pos, int start_station, int end_station,
+                     int seat, SeatMap& seat_map);
+};
+```
+
+**座位存储策略**：
+- 直接存储各区间剩余座位数量
+- 一个车次的所有销售日期的座位图连续存储
+- 位置计算：`seat_map_pos = start_pos + date_from_sale_start * sizeof(SeatMap)`
+- 支持原地更新，避免频繁的文件重写
 
 #### 3.2.4 订单数据结构
 
@@ -162,31 +209,48 @@ struct SeatMap {
 enum OrderStatus { SUCCESS, PENDING, REFUNDED };
 
 struct Order {
-    int id;                    // 订单ID
-    std::string username;      // 用户名
-    std::string trainID;       // 车次ID
-    std::string from;          // 出发站
-    std::string to;            // 到达站
-    std::string date;          // 乘车日期
-    std::string leavingTime;   // 出发时间
-    std::string arrivingTime;  // 到达时间
-    int price;                 // 总票价
-    int num;                   // 购票数量
-    OrderStatus status;        // 订单状态
-    int timestamp;             // 创建时间戳
+    FixedString<20> username;         // 用户名
+    FixedString<20> train_id;         // 车次ID
+    FixedString<30> from_station;     // 出发站
+    FixedString<30> to_station;       // 到达站
+    Date date;                        // 乘车日期
+    Time leaving_time;                // 出发时间
+    Time arriving_time;               // 到达时间
+    int price;                        // 总票价
+    int num;                          // 购票数量
+    OrderStatus status;               // 订单状态：SUCCESS, PENDING, REFUNDED
+    int timestamp;                    // 创建时间戳，用于订单排序和去重
+
+    ... // 构造函数、比较运算符等方法
+    
 };
 ```
+
+**设计特点**：
+
+1. **固定长度字符串**：使用`FixedString`替代`std::string`，避免动态内存分配，提高序列化效率
+2. **类型化时间**：使用`Date`和`Time`类型替代字符串，支持高效的时间计算和比较
+3. **基于时间戳排序**：订单按创建时间戳排序，便于查询和候补队列管理
+4. **双重存储策略**：
+   - 正常订单：以用户名为键存储在`order_db`中
+   - 候补订单：以车次+日期的哈希值为键存储在`pending_db`中
+5. **状态管理**：支持三种状态转换：`PENDING` → `SUCCESS` 或 `REFUNDED`
 
 ### 3.3 索引结构
 
 系统使用B+树实现关键索引，核心索引包括：
 
-1. **用户索引**：`BPT<long long, User>` - 使用用户名哈希值作为键
-2. **车次索引**：`BPT<long long, Train>` - 使用车次ID哈希值作为键
-3. **站点索引**：`BPT<long long, FixedString<20>>` - 站点名哈希值 -> 车次ID列表
-4. **座位索引**：`BPT<UniTrain, SeatMap>` - 车次+日期复合键 -> 座位分布图
-5. **订单索引**：(username, timestamp) -> Order (待实现)
-6. **候补队列索引**：(trainID, date) -> PriorityQueue<Order> (待实现)
+1. **用户索引**：`BPT<uint64_t, User>` - 使用用户名哈希值作为键
+2. **车次索引**：`BPT<FixedString<20>, Train>` - 使用车次ID作为键
+3. **站点索引**：`BPT<FixedString<30>, FixedString<20>>` - 站点名 -> 车次ID列表
+4. **路线索引**：`BPT<Route, FixedString<20>>` - 路线信息 -> 车次ID
+5. **订单索引**：`BPT<FixedString<20>, Order>` - 用户名 -> 订单列表
+6. **候补队列索引**：`BPT<long long, Order>` - 车次+日期哈希 -> 候补订单队列
+
+**座位管理存储**：
+- 使用MemoryRiver直接文件访问，不使用B+树索引
+- 连续存储模式：同一车次不同日期的座位图顺序存放
+- 通过偏移计算快速定位：`seat_map_pos = start_pos + date_offset * sizeof(SeatMap)`
 
 所有索引都使用`Hash::hashKey`函数生成哈希键，支持中文字符串的高效哈希。
 
@@ -208,47 +272,93 @@ public:
 };
 ```
 
-**实例化的B+树类型**：
-- `BPT<long long, User>` - 用户管理
-- `BPT<long long, Train>` - 车次管理  
-- `BPT<long long, FixedString<20>>` - 站点到车次映射
-- `BPT<UniTrain, SeatMap>` - 座位管理
+**实例化的B+树类型**（在`bplus_tree.cpp`中实现）：
+- `BPT<uint64_t, User>` - 用户管理（使用哈希键）
+- `BPT<FixedString<20>, Train>` - 车次管理  
+- `BPT<FixedString<30>, FixedString<20>>` - 站点名到车次ID映射
+- `BPT<Route, FixedString<20>>` - 路线到车次映射
+- `BPT<FixedString<20>, Order>` - 用户订单管理
+- `BPT<long long, Order>` - 候补订单管理（使用哈希键）
 
 **特性**：
 - 支持同一键对应多个值
-- 使用缓存管理器优化IO性能
+- 使用BPTCacheManager优化IO性能
 - 支持分裂与合并操作维护树平衡
+- 模板实例化集中管理，避免链接时冲突
 
 ### 4.2 内存缓存策略
 
-为了提高性能，系统实现了缓存：
+为了提高性能，系统实现了多层缓存机制：
 
-1. **LRU缓存**：保留最近使用的数据页在内存中
-2. **脏页跟踪**：追踪修改过的数据页，定期或在系统关闭时写回磁盘
+**1. LRU缓存**：
+- 在`cache.hpp`中实现完整的LRU缓存系统
+- 保留最近使用的数据页在内存中
+- 支持脏页跟踪（dirty page tracking）
+- 自动淘汰最久未使用的数据页
+
+**2. BPTCacheManager**：
+- 专门为B+树操作设计的缓存管理器
+- 管理节点的读取和写入缓存
+- 支持批量刷新脏页到磁盘
+- 提供eviction callback机制
+
+**3. MemoryRiver优化**：
+- 实现`ensureFileOpen()`机制保持文件句柄打开
+- 减少频繁的文件打开/关闭操作
+- 支持移动语义，避免文件句柄冲突
+- 提供flush机制确保关键数据及时写入
+
+**缓存策略**：
+```cpp
+template <class Key, class Value>
+class LRUCache {
+  // 容量可配置，默认1024个条目
+  size_t capacity_;
+  // 支持脏页标记和批量写回
+  void mark_dirty(const Key& key, bool is_dirty = true);
+  sjtu::vector<Key> get_dirty_keys() const;
+  // 淘汰回调，在页面被替换时调用
+  void set_eviction_callback(EvictionCallback callback);
+};
+```
 
 ### 4.3 文件存储设计
 
 系统文件组织结构：
 
 ```
-/data
-  ├── user_data.dat            # 用户B+树数据文件
-  ├── user_index.dat           # 用户B+树索引文件
-  ├── train_data.dat           # 车次B+树数据文件
-  ├── train_index.dat          # 车次B+树索引文件
-  ├── station_data.dat         # 站点B+树数据文件
-  ├── station_index.dat        # 站点B+树索引文件
-  ├── seat_data.dat            # 座位B+树数据文件
-  ├── seat_index.dat           # 座位B+树索引文件
-  ├── orders_data.dat          # 订单B+树数据文件 (待实现)
-  ├── orders_index.dat         # 订单B+树索引文件 (待实现)
-  └── pending_orders_data.dat  # 候补订单数据文件 (待实现)
+/项目根目录
+  ├── seat.memoryriver           # 座位管理MemoryRiver文件
+  ├── users.index                # 用户B+树索引文件
+  ├── users.block                # 用户B+树数据文件  
+  ├── train.index                # 车次B+树索引文件
+  ├── train.block                # 车次B+树数据文件
+  ├── station.index              # 站点B+树索引文件
+  ├── station.block              # 站点B+树数据文件
+  ├── route.index                # 路线B+树索引文件
+  ├── route.block                # 路线B+树数据文件
+  ├── order.index                # 订单B+树索引文件
+  ├── order.block                # 订单B+树数据文件
+  ├── pending.index              # 候补订单B+树索引文件
+  └── pending.block              # 候补订单B+树数据文件
 ```
 
+**当前实现的存储机制**：
+
+1. **MemoryRiver模式**：
+   - 用于座位管理，直接二进制文件读写
+   - 每个SeatMap占用固定大小空间
+   - 支持随机访问和原地更新
+
+2. **B+树存储模式**：
+   - 用于用户、车次、站点管理
+   - 索引文件(.index)存储内部节点信息和元数据
+   - 数据文件(.block)存储叶子节点数据
+
 **文件命名规则**：
-- 每个B+树实例对应两个文件：数据文件(_data.dat)和索引文件(_index.dat)
-- 数据文件存储叶子节点和内部节点
-- 索引文件存储树的元信息（根节点地址、高度等）
+- MemoryRiver文件：`{功能名}.memoryriver`
+- B+树索引文件：`{功能名}.index`
+- B+树数据文件：`{功能名}.block`
 
 ### 4.4 内存/磁盘交互策略
 
@@ -339,23 +449,27 @@ class LoginHandler : public CommandHandler {
 ### 5.4 座位预订算法
 
 ```
-座位预订处理：
+座位预订处理（当前实现）：
 1. 用户购票请求：train_id, date, start_station, end_station, num
-2. 构造查询键：UniTrain{train_id, date}
-3. 在seat_db中查找对应的SeatMap
-4. 检查区间[start_station, end_station)的座位余量：
-   a. 遍历该区间内的每个i，找到最小剩余座位数min_seats
-   b. 如果min_seats >= num，则可以预订
-5. 预订成功时进行座位扣减：
-   a. 对于区间[start_station, end_station)中的每个i
-   b. seat_num[i] -= num （减少该区间的剩余座位）
-6. 将更新后的SeatMap写回seat_db
+2. 根据车次和日期计算座位图位置：
+   seat_map_pos = start_pos + date_from_sale_start * sizeof(SeatMap)
+3. 从seat_db中读取对应的SeatMap：
+   seat_db.read(seat_map, seat_map_pos)
+4. 检查座位可用性：
+   调用seat_map.isSeatAvailable(start_station, end_station, seat)
+   遍历区间[start_station, end_station)，确保每段都有足够座位
+5. 预订座位：
+   调用seat_map.bookSeat(start_station, end_station, seat)
+   对区间内每个站点进行座位扣减：seat_num[i] -= seat
+6. 更新存储：
+   seat_db.update(seat_map, seat_map_pos)
 
 算法特点：
-- 直接存储各区间剩余座位数，逻辑简单清晰
+- 直接文件访问，通过位置偏移快速定位SeatMap
+- 连续存储模式，同一车次不同日期的座位图顺序存放
 - O(k)时间复杂度检查和更新区间（k为区间长度）
-- 支持单座位级别的精确管理
-- 便于座位余量的快速查询
+- 支持原地更新，避免频繁的文件重写
+- 座位操作逻辑封装在SeatMap结构中，代码模块化清晰
 ```
 
 ### 5.5 哈希函数设计
@@ -399,6 +513,113 @@ public:
 - 支持直接序列化到文件
 - 减少内存碎片，提高缓存命中率
 
+### 5.7 订单处理算法
+
+#### 5.7.1 购票流程
+
+```
+购票处理流程（buy_ticket命令）：
+1. 参数验证：
+   a. 检查用户是否已登录：isLoggedIn(username)
+   b. 验证车次是否存在且已发布：queryTrain(train_id)
+   c. 验证出发站和到达站在车次路线中的顺序
+   d. 验证日期是否在销售范围内：[sale_date_start, sale_date_end]
+
+2. 座位可用性检查：
+   a. 计算座位图位置：seat_map_pos = start_pos + date_offset * sizeof(SeatMap)
+   b. 读取座位图：seat_manager.getSeatMap(train_id, date)
+   c. 检查区间座位：seat_map.checkSeatAvailability(from_idx, to_idx, num)
+
+3. 订单处理分支：
+   if (座位充足) {
+       a. 立即扣减座位：seat_map.bookSeat(from_idx, to_idx, num)
+       b. 创建成功订单：Order(..., SUCCESS, timestamp)
+       c. 存储订单：order_manager.addOrder(order)
+       d. 返回成功信息：车次、时间、价格等
+   } else if (用户选择候补) {
+       a. 创建候补订单：Order(..., PENDING, timestamp)
+       b. 加入候补队列：order_manager.addPendingOrder(order)
+       c. 返回候补确认：queue
+   } else {
+       返回座位不足错误：-1
+   }
+```
+
+#### 5.7.2 退票流程
+
+```
+退票处理流程（refund_ticket命令）：
+1. 订单查询与验证：
+   a. 查询用户所有订单：order_manager.queryOrder(username)
+   b. 根据时间戳定位目标订单
+   c. 验证订单状态（只能退SUCCESS状态的订单）
+
+2. 座位释放：
+   a. 解析订单中的车次、日期、区间信息
+   b. 释放座位：seat_manager.releaseSeat(train_id, date, from_idx, to_idx, num)
+   c. 更新座位图到磁盘
+
+3. 候补订单处理：
+   a. 查询该车次日期的候补队列：queryPendingOrder(train_id, date)
+   b. 按时间戳顺序处理候补订单：
+      for each pending_order in queue:
+          if (座位足够处理此候补订单) {
+              i. 扣减相应座位
+              ii. 更新订单状态：PENDING → SUCCESS
+              iii. 从候补队列移除：removeFromPending()
+              iv. 更新到正式订单存储
+          }
+
+4. 原订单状态更新：
+   a. 更新订单状态：SUCCESS → REFUNDED
+   b. 返回退票成功确认
+```
+
+#### 5.7.3 订单查询算法
+
+```
+订单查询流程（query_order命令）：
+1. 用户验证：
+   a. 检查用户是否已登录：isLoggedIn(username)
+
+2. 订单检索：
+   a. 使用用户名作为键查询：order_manager.queryOrder(username)
+   b. B+树查找：order_db.find(username)返回用户所有订单
+
+3. 结果排序与格式化：
+   a. 按时间戳排序（升序）：sort by timestamp
+   b. 格式化输出：[timestamp] train_id from to date time price num status
+   c. 状态显示：SUCCESS, PENDING, REFUNDED
+```
+
+#### 5.7.4 候补队列管理
+
+```
+候补队列的关键设计：
+1. 存储结构：
+   - 键：Hash::hashKey(train_id + date.toString())
+   - 值：Order对象（包含完整订单信息）
+   - 排序：按timestamp自动排序（B+树特性）
+
+2. 队列处理时机：
+   - 退票时自动处理：refund_ticket触发
+   - 按FIFO原则：最早提交的候补订单优先处理
+   - 原子性保证：一个候补订单的处理要么完全成功要么完全失败
+
+3. 座位分配策略：
+   - 贪心算法：优先满足时间戳最小的订单
+   - 部分满足：如果座位不足以满足某个候补订单，跳过处理下一个
+   - 连续处理：直到队列为空或剩余座位无法满足任何候补订单
+```
+
+**算法复杂度分析**：
+
+- **购票查询**: O(log n) - B+树查找车次信息
+- **座位检查**: O(k) - k为出发到到达站的区间长度  
+- **订单存储**: O(log n) - B+树插入操作
+- **退票处理**: O(log n + m) - n为订单数量，m为候补队列长度
+- **候补队列处理**: O(m × k) - m个候补订单，每个需要O(k)时间检查座位
+
 ## 6. 接口设计
 
 ### 6.1 命令行接口
@@ -430,6 +651,9 @@ public:
                                              const std::string& name,
                                              const std::string& mail_addr,
                                              const int& privilege);
+
+  // 检查用户是否已登录，返回权限级别或-1
+  int isLoggedIn(const std::string& username);
 };
 ```
 
@@ -438,8 +662,9 @@ public:
 ```cpp
 class TrainManager {
 private:
-    BPT<long long, Train> train_db;              // 车次信息存储
-    BPT<long long, FixedString<20>> station_db;  // 站点到车次映射
+    BPT<FixedString<20>, Train> train_db;              // 车次信息存储
+    BPT<FixedString<30>, FixedString<20>> station_db;  // 站点到车次映射
+    BPT<Route, FixedString<20>> route_db;              // 路线到车次映射
 
 public:
     TrainManager();
@@ -450,11 +675,22 @@ public:
     // 删除车次，返回状态码
     int deleteTrain(const std::string& train_id);
     
-    // 发布车次，返回状态码
-    int releaseTrain(const std::string& train_id);
+    // 发布车次，返回状态码（引用返回车次对象供座位管理器使用）
+    int releaseTrain(const std::string& train_id, Train& train);
     
     // 查询车次信息，通过引用返回车次对象
     int queryTrain(const std::string& train_id, Train& train);
+    int queryTrain(const FixedString<20>& train_id, Train& train);
+    
+    // 更新车次信息
+    void updateTrain(const Train& train);
+    
+    // 查询经过指定站点的车次
+    sjtu::vector<FixedString<20>> queryStation(const std::string& station_id);
+    sjtu::vector<FixedString<20>> queryStation(const FixedString<30>& station_id);
+    
+    // 查询指定路线的车次
+    sjtu::vector<FixedString<20>> queryRoute(const Route& route);
 };
 ```
 
@@ -463,39 +699,90 @@ public:
 ```cpp
 class SeatManager {
 private:
-    BPT<UniTrain, SeatMap> seat_db;  // 座位信息存储
+    MemoryRiver<SeatMap> seat_db;  // 座位信息存储（使用MemoryRiver进行高效文件访问）
 
 public:
     SeatManager();
     
-    // 查询指定车次和日期的座位分布
-    SeatMap querySeat(const UniTrain& unitrain);
+    // 初始化座位图（发布车次时调用）
+    void initSeat(const Train& train, int& train_seat);
     
-    // 预订座位（待实现）
-    // bool bookSeat(const UniTrain& unitrain, int start_station, 
-    //               int end_station, int num);
+    // 查询指定位置的座位分布
+    SeatMap querySeat(int start_pos, int& seat_map_pos, int date_from_sale_start);
     
-    // 退票释放座位（待实现）
-    // bool refundSeat(const UniTrain& unitrain, int start_station,
-    //                 int end_station, int num);
+    // 预订座位
+    int bookSeat(int seat_map_pos, int start_station, int end_station, 
+                 int seat, SeatMap& seat_map);
+    
+    // 退票释放座位
+    void releaseSeat(int seat_map_pos, int start_station, int end_station,
+                     int seat, SeatMap& seat_map);
 };
 ```
+
+**实现特点**：
+- 使用MemoryRiver进行直接文件I/O，避免复杂的B+树操作
+- 连续存储同一车次不同日期的座位图，支持高效的日期偏移访问
+- 座位操作直接在SeatMap结构上进行，支持O(k)复杂度的区间更新（k为区间长度）
+- 支持原地更新，避免频繁的文件重写操作
 
 #### 订单管理接口
 
 ```cpp
 class OrderManager {
+private:
+    BPT<FixedString<20>, Order> order_db;    // 用户订单存储
+    BPT<long long, Order> pending_db;        // 候补订单存储
+
 public:
-    // 查询订单
-    std::string queryOrder(const std::string& username);
+    OrderManager();
     
-    // 退票
-    bool refundTicket(const std::string& username, int orderIndex);
+    // 添加订单
+    void addOrder(const Order& order);
     
-    // 处理候补队列
-    void processPendingOrders(const std::string& trainID, const std::string& date);
+    // 添加候补订单
+    void addPendingOrder(const Order& order);
+    
+    // 查询用户订单
+    sjtu::vector<Order> queryOrder(const std::string& username);
+    
+    // 更新订单状态
+    void updateOrderStatus(const std::string& username, const Order& order, OrderStatus status);
+    void updateOrderStatus(const FixedString<20>& username, const Order& order, OrderStatus status);
+    
+    // 从候补队列移除订单
+    void removeFromPending(const FixedString<20>& unitrain, const Date& date, const Order& order);
+    
+    // 查询候补订单
+    sjtu::vector<Order> queryPendingOrder(const FixedString<20>& train_id, const Date& date);
 };
 ```
+
+#### 命令处理系统接口
+
+系统采用命令模式设计，通过统一的命令处理器接口处理所有用户请求：
+
+```cpp
+class CommandHandler {
+public:
+    virtual void execute(const ParamMap& params, const std::string& timestamp) = 0;
+    virtual ~CommandHandler() = default;
+};
+
+class CommandSystem {
+public:
+    void registerHandler(const std::string& command, CommandHandler* handler);
+    void processCommand(const std::string& line);
+};
+```
+
+**主要命令处理器包括**：
+
+- **用户管理命令**：`LoginHandler`, `AddUserHandler`, `LogoutHandler`, `QueryProfileHandler`, `ModifyProfileHandler`
+- **车次管理命令**：`AddTrainHandler`, `DeleteTrainHandler`, `ReleaseTrainHandler`, `QueryTrainHandler`, `QueryTransferHandler`  
+- **订票管理命令**：`QueryTicketHandler`, `BuyTicketHandler`, `RefundTicketHandler`, `QueryOrderHandler`
+
+每个处理器负责解析参数、调用相应的管理器方法并格式化输出结果。
 
 ## 7. 容错与异常处理
 
@@ -544,8 +831,9 @@ public:
 3. **批处理操作**：合并多次IO为批量IO
 4. **延迟写入**：非关键数据延迟写入磁盘
 5. **预读取机制**：利用空间局部性预先读取相关数据
-6. **内存池技术**：减少内存分配开销
-7. **命令优先级处理**：根据指令常用度设计优化策略
+6. **分布式扩展**：支持数据和请求的分布式处理
+7. **内存池技术**：减少内存分配开销
+8. **命令优先级处理**：根据指令常用度设计优化策略
 
 ## 9. 测试策略
 
@@ -836,27 +1124,35 @@ public:
 - 车次信息查询
 - 站点到车次的映射索引
 
-✅ **座位管理基础**
-- SeatManager基础框架
-- 座位查询接口
+✅ **座位管理模块**
+- SeatManager完整实现（使用MemoryRiver）
+- 座位初始化、查询、预订、释放功能
+- 连续存储模式，支持日期偏移访问
+- 直接文件I/O，高效的原地更新
+- SeatMap结构封装座位操作逻辑
 
-### 12.2 进行中模块
+✅ **票务查询模块**
+- QueryTicketHandler完整实现
+- 支持时间和价格排序
+- 站点索引查询和过滤逻辑
+- 座位余量查询集成
+- TicketInfo结构化数据返回
 
-🔄 **票务查询模块**
-- query_ticket基础算法（需完善）
-- 站点索引查询逻辑
-- 时间和价格计算
+✅ **订单管理模块**
+- OrderManager完整实现（使用B+树）
+- 订单创建、查询、状态更新功能
+- BuyTicketHandler支持购票和候补队列
+- QueryOrderHandler支持订单查询
+- RefundTicketHandler支持退票和候补处理
+- 候补队列自动处理机制
 
-🔄 **订单管理模块**
-- 订单数据结构设计中
-- 购票流程开发中
+✅ **换乘查询模块**
+- QueryTransferHandler完整实现
+- 换乘路径搜索算法完整
+- 时间和价格计算逻辑完整
+- 支持时间优先和价格优先排序
 
-### 12.3 待实现模块
-
-⏳ **高级票务功能**
-- 换乘查询算法
-- 候补购票系统
-- 退票处理
+### 12.2 待实现模块
 
 ⏳ **性能优化**
 - 查询缓存机制
@@ -868,12 +1164,14 @@ public:
 - 压力测试
 - 边界条件测试
 
-### 12.4 技术债务
+### 12.3 技术债务
 
-- [ ] B+树模板实例化需要统一管理
+- [ ] B+树模板实例化需要统一管理  
+- [ ] 座位管理器的错误处理需要完善
 - [ ] 异常处理机制需要完善
 - [ ] 日志系统需要添加
 - [ ] 内存泄漏检测和修复
+- [ ] QueryTicket性能瓶颈需要进一步优化
 
 ## 13. 总结
 
@@ -892,7 +1190,7 @@ public:
 
 - **参数映射+分发器**命令解析模式，健壮且灵活
 - **直接座位管理**，O(k)复杂度的区间更新
-- **复合键设计**，UniTrain有效组合车次和日期
+- **MemoryRiver优化**，高效的文件I/O和缓存管理
 - **模板化B+树**，支持多种数据类型的统一存储
 - **缓存管理**，平衡内存使用和IO性能
 
