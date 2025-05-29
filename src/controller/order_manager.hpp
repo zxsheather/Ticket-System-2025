@@ -2,15 +2,13 @@
 #include <cstdint>
 
 #include "../model/order.hpp"
-#include "../model/train.hpp"
 #include "../storage/bplus_tree.hpp"
 #include "../utilities/limited_sized_string.hpp"
 
 class OrderManager {
  private:
   BPT<FixedString<20>, Order> order_db;  // username -> order
-  // BPT<UniTrain, Order> pending_db;       // train_id -> pending order
-  BPT<uint64_t, Order> pending_db;  // hashed UniTrain -> pending order
+  BPT<uint64_t, Order> pending_db;       // hashed UniTrain -> pending order
  public:
   OrderManager();
   void addOrder(const Order& order);

@@ -1,6 +1,5 @@
 #include "order_command.hpp"
 
-// #include <chrono>
 #include <iostream>
 
 #include "../controller/seat_manager.hpp"
@@ -9,53 +8,29 @@
 #include "../utilities/merge_sort.hpp"
 #include "command_system.hpp"
 
-// static long long total_queryroute_time = 0;
-// static long long cunstruct_time = 0;
-// static long long total_queryseat_time = 0;
-// static long long total_sort_time = 0;
-// static long long operation_count = 0;
-
 QueryTicketHandler::QueryTicketHandler(TrainManager& train_manager,
                                        SeatManager& seat_manager)
     : train_manager(train_manager), seat_manager(seat_manager) {}
 
 void QueryTicketHandler::execute(const ParamMap& params,
                                  const std::string& timestamp) {
-  // operation_count++;
-  // if (operation_count % 10000 == 0) {
-  //   std::cerr << "Total query route time: " << total_queryroute_time << "
-  //   ns\n"; std::cerr << "Total construct time: " << cunstruct_time << "
-  //   ns\n"; std::cerr << "Total query seat time: " << total_queryseat_time <<
-  //   " ns\n"; std::cerr << "Total sort time: " << total_sort_time << " ns\n";
-  // }
   std::cout << '[' << timestamp << "] ";
   std::string date_str = params.get('d');
   Date date{std::stoi(date_str.substr(0, 2)), std::stoi(date_str.substr(3))};
   std::string start_station = params.get('s');
   std::string end_station = params.get('t');
-  // auto query_route_start = std::chrono::high_resolution_clock::now();
   sjtu::vector<FixedString<20>> result =
       train_manager.queryRoute({start_station, end_station});
-  // auto query_route_end = std::chrono::high_resolution_clock::now();
-  // total_queryroute_time +=
-  // std::chrono::duration_cast<std::chrono::nanoseconds>(
-  //                              query_route_end - query_route_start)
-  //                              .count();
 
   size_t i = 0, j = 0;
 
   ComparisonOrder order =
       params.has('p') ? (params.get('p') == "time" ? TIME : COST) : TIME;
 
-  // auto construct_start = std::chrono::high_resolution_clock::now();
   sjtu::vector<TicketInfo> tickets(30);
   int idx = 0;
   sjtu::vector<TicketOrder> ticket_order(30);
   Train train;
-  // auto construct_end = std::chrono::high_resolution_clock::now();
-  // cunstruct_time += std::chrono::duration_cast<std::chrono::nanoseconds>(
-  // construct_end - construct_start)
-  // .count();
   for (auto& train_id : result) {
     train_manager.queryTrain(train_id, train);
     int start_index = train.queryStationIndex(start_station);
@@ -69,23 +44,15 @@ void QueryTicketHandler::execute(const ParamMap& params,
       continue;
     }
     int pos;
-    // auto query_seat_start = std::chrono::high_resolution_clock::now();
     int seats = seat_manager
                     .querySeat(train.seat_map_pos, pos,
                                origin_date - train.sale_date_start)
                     .queryAvailableSeat(start_index, end_index);
-    // auto query_seat_end = std::chrono::high_resolution_clock::now();
-    // total_queryseat_time +=
-    // std::chrono::duration_cast<std::chrono::nanoseconds>(
-    // query_seat_end - query_seat_start)
-    // .count();
-    // auto construct_start = std::chrono::high_resolution_clock::now();
     tickets.push_back(TicketInfo(
         train_id, start_station, end_station,
         TimePoint(origin_date, train.departure_times[start_index]),
         TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
         train.prices[end_index] - train.prices[start_index], seats));
-    // auto construct_end = std::chrono::high_resolution_clock::now();
 
     idx++;
     if (order == TIME) {
@@ -93,23 +60,13 @@ void QueryTicketHandler::execute(const ParamMap& params,
     } else {
       ticket_order.push_back({tickets[idx - 1].price, idx - 1, train_id});
     }
-    // cunstruct_time += std::chrono::duration_cast<std::chrono::nanoseconds>(
-    // construct_end - construct_start)
-    // .count();
   }
   if (idx == 0) {
     std::cout << "0\n";
     return;
   }
   std::cout << idx << '\n';
-
-  // auto sort_start = std::chrono::high_resolution_clock::now();
   mergeSort(ticket_order, 0, idx - 1);
-  // auto sort_end = std::chrono::high_resolution_clock::now();
-  // total_sort_time += std::chrono::duration_cast<std::chrono::nanoseconds>(
-  // sort_end - sort_start)
-  // .count();
-
   for (size_t k = 0; k < ticket_order.size(); ++k) {
     int index = ticket_order[k].index;
     std::cout << tickets[index].format() << '\n';

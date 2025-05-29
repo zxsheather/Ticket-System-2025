@@ -9,8 +9,8 @@
 class UserManager {
  private:
   BPT<uint64_t, User> user_db;
-  // from username to privilege
-  sjtu::map<std::string, int> logged_in_users{};
+
+  sjtu::map<std::string, int> logged_in_users{};  // from username to privilege
 
   bool is_first_user{false};
 

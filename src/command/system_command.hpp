@@ -6,8 +6,7 @@ class ExitHandler : public CommandHandler {
   void execute(const ParamMap& params, const std::string& timestamp) override;
 };
 
-// class CleanHandler : public CommandHandler {
-//  public:
-//   std::string execute(const ParamMap& params, const std::string& timestamp)
-//   override;
-// };
+class CleanHandler : public CommandHandler {
+ public:
+  void execute(const ParamMap& params, const std::string& timestamp) override;
+};

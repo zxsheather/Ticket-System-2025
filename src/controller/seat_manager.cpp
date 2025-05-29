@@ -2,7 +2,7 @@
 
 #include "../model/seat.hpp"
 
-SeatManager::SeatManager() : seat_db("seat") {
+SeatManager::SeatManager() : seat_db("seat.memoryriver") {
   if (!seat_db.exist()) {
     seat_db.initialise();
   }

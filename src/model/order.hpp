@@ -2,32 +2,6 @@
 #include "../utilities/limited_sized_string.hpp"
 #include "time.hpp"
 
-// struct PendingOrder {
-//   FixedString<20> train_id{};
-//   int start_station{};
-//   int end_station{};
-//   int ticket_num{};
-//   int timestamp{};
-
-//   bool operator<(const PendingOrder& other) const {
-//     return timestamp < other.timestamp;
-//   }
-//   bool operator>(const PendingOrder& other) const {
-//     return timestamp > other.timestamp;
-//   }
-//   bool operator==(const PendingOrder& other) const {
-//     return timestamp == other.timestamp;
-//   }
-//   bool operator!=(const PendingOrder& other) const {
-//     return timestamp != other.timestamp;
-//   }
-//   bool operator<=(const PendingOrder& other) const {
-//     return timestamp <= other.timestamp;
-//   }
-//   bool operator>=(const PendingOrder& other) const {
-//     return timestamp >= other.timestamp;
-//   }
-// };
 enum OrderStatus { SUCCESS = 0, PENDING = 1, REFUNDED = 2 };
 
 struct Order {

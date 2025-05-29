@@ -8,9 +8,9 @@
 class Hash {
  public:
   static int hashCommand(const std::string& cmd, const int mod) {
-    uint32_t hash = 5381;  // djb2哈希起始值
+    uint32_t hash = 5381;
     for (char c : cmd) {
-      hash = ((hash << 5) + hash) + c;  // hash * 33 + c
+      hash = ((hash << 5) + hash) + c;
     }
     return hash % mod;
   }
@@ -21,15 +21,15 @@ class Hash {
     const char* data = s.string;
     size_t len = s.length;
 
-    uint64_t hash = 0xCBF29CE484222325ULL;  // FNV偏移基数
+    uint64_t hash = 0xCBF29CE484222325ULL;
 
     // 每次处理8个字节
     size_t i = 0;
     for (; i + 8 <= len; i += 8) {
       uint64_t chunk;
-      memcpy(&chunk, data + i, 8);  // 避免对齐问题
+      memcpy(&chunk, data + i, 8);
       hash ^= chunk;
-      hash *= 0x100000001B3ULL;  // FNV质数
+      hash *= 0x100000001B3ULL;
     }
 
     // 处理剩余字节
@@ -42,11 +42,10 @@ class Hash {
   }
 
   static uint64_t hashKey(const std::string& s) {
-    // 字符串哈希 - 速度优化版本
     const char* data = s.data();
     size_t len = s.length();
 
-    if (len <= 16) {  // 短字符串快速路径
+    if (len <= 16) {
       uint64_t hash = 0;
       for (size_t i = 0; i < len; ++i) {
         hash = hash * 33 + data[i];
@@ -54,17 +53,15 @@ class Hash {
       return hash;
     }
 
-    // 长字符串采用8字节块处理
     uint64_t hash = 0;
     size_t i = 0;
     for (; i + 8 <= len; i += 8) {
       uint64_t chunk;
       memcpy(&chunk, data + i, 8);
       hash ^= chunk;
-      hash = (hash << 13) | (hash >> 51);  // 循环移位
+      hash = (hash << 13) | (hash >> 51);
     }
 
-    // 处理剩余字节
     for (; i < len; ++i) {
       hash = hash * 33 + data[i];
     }

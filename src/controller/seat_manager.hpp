@@ -2,7 +2,7 @@
 
 #include "../model/seat.hpp"
 #include "../model/train.hpp"
-#include "../storage/bplus_tree.hpp"
+#include "../storage/memory_river.hpp"
 
 class SeatManager {
  private:
