@@ -110,8 +110,7 @@ void QueryTrainHandler::execute(const ParamMap& params,
     std::cout << "-1\n";
     return;
   }
-  UniTrain unitrain{train_id, date};
-  SeatMap seat_map = seat_manager.querySeat(unitrain);
+  SeatMap seat_map = seat_manager.querySeat(train_id, date);
   std::cout << format(train, seat_map.seat_num, date) << '\n';
 }
 
@@ -249,9 +248,9 @@ void QueryTransferHandler::execute(const ParamMap& params,
     return;
   }
   SeatMap seat_map1 =
-      seat_manager.querySeat(UniTrain(ticket1.train_id, ticket1.origin_date));
+      seat_manager.querySeat(ticket1.train_id, ticket1.origin_date);
   SeatMap seat_map2 =
-      seat_manager.querySeat(UniTrain(ticket2.train_id, ticket2.origin_date));
+      seat_manager.querySeat(ticket2.train_id, ticket2.origin_date);
   ticket1.seats = seat_map1.queryAvailableSeat(final_start_index,
                                                final_transfer_index_from_start);
   ticket2.seats = seat_map2.queryAvailableSeat(final_transfer_index_from_end,

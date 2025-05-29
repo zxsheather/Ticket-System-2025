@@ -47,7 +47,7 @@ void QueryTicketHandler::execute(const ParamMap& params,
         TimePoint(origin_date, train.departure_times[start_index]),
         TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
         train.prices[end_index] - train.prices[start_index],
-        seat_manager.querySeat(UniTrain(std::move(train_id), origin_date))
+        seat_manager.querySeat(train_id, origin_date)
             .queryAvailableSeat(start_index, end_index));
     tickets.push_back(ticket_info);
   }
@@ -107,14 +107,13 @@ void BuyTicketHandler::execute(const ParamMap& params,
     std::cout << "-1\n";
     return;
   }
-  UniTrain unitrain(train_id, start_date);
-  SeatMap seat_map = seat_manager.querySeat(unitrain);
+  SeatMap seat_map = seat_manager.querySeat(train_id, start_date);
   if (ticket_num > train.seat_num) {
     std::cout << "-1\n";
     return;
   }
-  int booked = seat_manager.bookSeat(unitrain, start_index, end_index,
-                                     ticket_num, seat_map);
+  int booked = seat_manager.bookSeat(train_id, start_date, start_index,
+                                     end_index, ticket_num, seat_map);
   if (booked == -1) {
     if (wait) {
       Order order(std::move(username), std::move(train_id), start_date,
@@ -195,8 +194,8 @@ void RefundTicketHandler::execute(const ParamMap& params,
   }
   if (order.status == PENDING) {
     order_manager.updateOrderStatus(username, order, REFUNDED);
-    order_manager.removeFromPending(
-        UniTrain(order.train_id, order.origin_station_date), order);
+    order_manager.removeFromPending(order.train_id, order.origin_station_date,
+                                    order);
     std::cout << "0\n";
     return;
   }
@@ -209,13 +208,12 @@ void RefundTicketHandler::execute(const ParamMap& params,
   int start_index = train.queryStationIndex(order.from);
   int end_index = train.queryStationIndex(order.to);
   Date date = order.origin_station_date;
-  UniTrain unitrain(order.train_id, date);
-  SeatMap seat_map = seat_manager.querySeat(unitrain);
-  seat_manager.releaseSeat(unitrain, start_index, end_index, order.ticket_num,
-                           seat_map);
+  SeatMap seat_map = seat_manager.querySeat(order.train_id, date);
+  seat_manager.releaseSeat(order.train_id, date, start_index, end_index,
+                           order.ticket_num, seat_map);
   order_manager.updateOrderStatus(username, order, REFUNDED);
-  sjtu::vector<Order> pending_orders =
-      order_manager.queryPendingOrder(unitrain);
+  sjtu::vector<Order> pending_orders = order_manager.queryPendingOrder(
+      order.train_id, order.origin_station_date);
   if (pending_orders.empty()) {
     std::cout << "0\n";
     return;
@@ -227,7 +225,7 @@ void RefundTicketHandler::execute(const ParamMap& params,
       continue;
     }
     int booked = seat_manager.bookSeat(
-        unitrain, pending_order.start_station_index,
+        order.train_id, date, pending_order.start_station_index,
         pending_order.end_station_index, pending_order.ticket_num, seat_map);
     if (booked == 0) {
       order_manager.updateOrderStatus(pending_order.username, pending_order,
@@ -236,7 +234,7 @@ void RefundTicketHandler::execute(const ParamMap& params,
     }
   }
   for (int i = (int)need_to_remove.size() - 1; i >= 0; --i) {
-    order_manager.removeFromPending(unitrain, need_to_remove[i]);
+    order_manager.removeFromPending(order.train_id, date, need_to_remove[i]);
   }
   std::cout << "0\n";
 }

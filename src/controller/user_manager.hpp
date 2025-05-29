@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+
 #include "../model/user.hpp"
 #include "../stl/map.hpp"
 #include "../stl/utility.hpp"
@@ -6,7 +8,7 @@
 
 class UserManager {
  private:
-  BPT<long long, User> user_db;
+  BPT<uint64_t, User> user_db;
   // from username to privilege
   sjtu::map<std::string, int> logged_in_users{};
 

@@ -1,5 +1,7 @@
 #include "bplus_tree.hpp"
 
+#include <cstdint>
+
 #include "../model/order.hpp"
 #include "../model/seat.hpp"
 #include "../model/station.hpp"
@@ -574,11 +576,11 @@ bool BPT<Key, Value>::exists(const Key& key) {
   return !find(key).empty();
 }
 
-template class BPT<long long, User>;
+template class BPT<uint64_t, User>;
 template class BPT<FixedString<20>, Train>;
-template class BPT<UniTrain, SeatMap>;
-template class BPT<long long, FixedString<20>>;
+template class BPT<uint64_t, SeatMap>;
+template class BPT<uint64_t, FixedString<20>>;
 template class BPT<FixedString<20>, Order>;
-template class BPT<UniTrain, Order>;
+template class BPT<uint64_t, Order>;
 template class BPT<FixedString<30>, FixedString<20>>;
 template class BPT<Route, FixedString<20>>;
