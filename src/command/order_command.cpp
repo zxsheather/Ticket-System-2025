@@ -19,7 +19,7 @@ void QueryTicketHandler::execute(const ParamMap& params,
   Date date{std::stoi(date_str.substr(0, 2)), std::stoi(date_str.substr(3))};
   std::string start_station = params.get('s');
   std::string end_station = params.get('t');
-  sjtu::vector<Train> trains =
+  sjtu::vector<FixedString<20>> result =
       train_manager.queryRoute({start_station, end_station});
 
   size_t i = 0, j = 0;
@@ -29,7 +29,9 @@ void QueryTicketHandler::execute(const ParamMap& params,
 
   sjtu::vector<TicketInfo> tickets;
 
-  for (auto& train : trains) {
+  for (auto& train_id : result) {
+    Train train;
+    train_manager.queryTrain(train_id, train);
     int start_index = train.queryStationIndex(start_station);
     int end_index = train.queryStationIndex(end_station);
     if (start_index == -1 || end_index == -1 || start_index >= end_index) {
@@ -41,11 +43,11 @@ void QueryTicketHandler::execute(const ParamMap& params,
       continue;
     }
     TicketInfo ticket_info(
-        train.train_id, start_station, end_station,
+        train_id, start_station, end_station,
         TimePoint(origin_date, train.departure_times[start_index]),
         TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
         train.prices[end_index] - train.prices[start_index],
-        seat_manager.querySeat(UniTrain(std::move(train.train_id), origin_date))
+        seat_manager.querySeat(UniTrain(std::move(train_id), origin_date))
             .queryAvailableSeat(start_index, end_index));
     tickets.push_back(ticket_info);
   }
