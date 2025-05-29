@@ -93,15 +93,12 @@ class BPT {
   BPT(const std::string& filename = "database")
       : filename_(filename),
         index_file_(filename + ".index"),
-        block_file_(filename + ".block"),
-        cache_manager_(index_file_, block_file_) {
+        block_file_(filename + ".block")
+  // cache_manager_(index_file_, block_file_)
+  {
     if (!index_file_.exist()) {
       index_file_.initialise();
       block_file_.initialise();
-      // index_file_.write_info(-1, 1);
-      // block_file_.write_info(-1, 1);
-      // index_file_.write_info(0, 2);
-      // block_file_.write_info(0, 2);
       root_ = -1;
       height_ = 0;
     } else {
@@ -110,7 +107,7 @@ class BPT {
     }
   }
   ~BPT() {
-    cache_manager_.flush_cache();
+    // cache_manager_.flush_cache();
     index_file_.write_info(root_, 1);
     index_file_.write_info(height_, 2);
   }
@@ -133,7 +130,7 @@ class BPT {
   MemoryRiver<Block<Key, Value>, 2> block_file_;
   int root_;
   int height_;
-  sjtu::BPTCacheManager<Key, Value> cache_manager_;
+  // sjtu::BPTCacheManager<Key, Value> cache_manager_;
 
   // search for target leafnode and record the search path
   int findLeafNode(const Key_Value<Key, Value>& key,

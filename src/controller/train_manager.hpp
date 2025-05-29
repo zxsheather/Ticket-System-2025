@@ -7,8 +7,8 @@ class TrainManager {
  private:
   BPT<FixedString<20>, Train> train_db;
   BPT<FixedString<30>, FixedString<20>>
-      station_db;              // Maps station to train IDs
-  BPT<Route, Train> route_db;  // Maps route to train
+      station_db;                        // Maps station to train IDs
+  BPT<Route, FixedString<20>> route_db;  // Maps route to train IDs
  public:
   TrainManager();
 
@@ -26,5 +26,5 @@ class TrainManager {
 
   sjtu::vector<FixedString<20>> queryStation(const FixedString<30>& station_id);
 
-  sjtu::vector<Train> queryRoute(const Route& route);
+  sjtu::vector<FixedString<20>> queryRoute(const Route& route);
 };
