@@ -6,7 +6,7 @@
 
 class ParamMap {
  private:
-  static const int MAX_PARAMS = 26;
+  static const int MAX_PARAMS = 25;
   std::string values[MAX_PARAMS];
   bool exists[MAX_PARAMS];
 

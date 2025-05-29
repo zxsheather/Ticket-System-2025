@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+
 #include "../model/order.hpp"
 #include "../model/train.hpp"
 #include "../storage/bplus_tree.hpp"
@@ -7,7 +9,8 @@
 class OrderManager {
  private:
   BPT<FixedString<20>, Order> order_db;  // username -> order
-  BPT<UniTrain, Order> pending_db;       // train_id -> pending order
+  // BPT<UniTrain, Order> pending_db;       // train_id -> pending order
+  BPT<uint64_t, Order> pending_db;  // hashed UniTrain -> pending order
  public:
   OrderManager();
   void addOrder(const Order& order);
@@ -16,7 +19,9 @@ class OrderManager {
                          OrderStatus status);
   void updateOrderStatus(const FixedString<20>& username, const Order& order,
                          OrderStatus status);
-  void removeFromPending(const UniTrain& unitrain, const Order& order);
+  void removeFromPending(const FixedString<20>& train_id, const Date& date,
+                         const Order& order);
   sjtu::vector<Order> queryOrder(const std::string& username);
-  sjtu::vector<Order> queryPendingOrder(const UniTrain& unitrain);
+  sjtu::vector<Order> queryPendingOrder(const FixedString<20>& train_id,
+                                        const Date& date);
 };

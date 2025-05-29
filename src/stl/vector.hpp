@@ -6,7 +6,7 @@
 
 #include "exceptions.hpp"
 
-constexpr size_t DEFAULT_CAPACITY = 2;
+constexpr size_t DEFAULT_CAPACITY = 4;
 namespace sjtu {
 /**
  * a data container like std::vector

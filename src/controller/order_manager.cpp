@@ -1,5 +1,9 @@
 #include "order_manager.hpp"
 
+#include <cstdint>
+
+#include "../utilities/hash.hpp"
+
 OrderManager::OrderManager() : order_db("order"), pending_db("pending") {}
 
 void OrderManager::addOrder(const Order& order) {
@@ -7,7 +11,9 @@ void OrderManager::addOrder(const Order& order) {
 }
 
 void OrderManager::addPendingOrder(const Order& order) {
-  pending_db.insert(UniTrain(order.train_id, order.origin_station_date), order);
+  long long hashed_key =
+      Hash::hashKey(order.train_id, order.origin_station_date);
+  pending_db.insert(hashed_key, order);
 }
 
 sjtu::vector<Order> OrderManager::queryOrder(const std::string& username) {
@@ -33,11 +39,14 @@ void OrderManager::updateOrderStatus(const FixedString<20>& username,
   order_db.update(username, updated_order, order);
 }
 
-void OrderManager::removeFromPending(const UniTrain& unitrain,
-                                     const Order& order) {
-  pending_db.remove(unitrain, order);
+void OrderManager::removeFromPending(const FixedString<20>& unitrain,
+                                     const Date& date, const Order& order) {
+  long long hashed_key = Hash::hashKey(unitrain, date);
+  pending_db.remove(hashed_key, order);
 }
 
-sjtu::vector<Order> OrderManager::queryPendingOrder(const UniTrain& unitrain) {
+sjtu::vector<Order> OrderManager::queryPendingOrder(
+    const FixedString<20>& train_id, const Date& date) {
+  long long unitrain = Hash::hashKey(train_id, date);
   return pending_db.find(unitrain);
 }

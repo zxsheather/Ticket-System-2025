@@ -13,7 +13,7 @@ int UserManager::addUser(const std::string& cur_username,
                          const std::string& username,
                          const std::string& password, const std::string& name,
                          const std::string& mail_addr, const int& privilege) {
-  long long username_hash = Hash::hashKey(username);
+  uint64_t username_hash = Hash::hashKey(username);
   if (is_first_user) {
     User user(username, password, name, mail_addr, 10);
     user_db.insert(username_hash, user);
@@ -41,7 +41,7 @@ int UserManager::login(const std::string& username,
   if (logged_in_users.find(username) != logged_in_users.end()) {
     return -1;
   }
-  long long username_hash = Hash::hashKey(username);
+  uint64_t username_hash = Hash::hashKey(username);
   sjtu::vector<User> result = user_db.find(username_hash);
   if (result.empty()) {
     return -1;
@@ -94,7 +94,7 @@ sjtu::pair<int, UserProfile> UserManager::modifyProfile(
   if (cur_privilege <= privilege) {
     return sjtu::pair{-1, UserProfile()};
   }
-  long long username_hash = Hash::hashKey(username);
+  uint64_t username_hash = Hash::hashKey(username);
   sjtu::vector<User> result = user_db.find(username_hash);
   if (result.empty()) {
     return sjtu::pair{-1, UserProfile()};
