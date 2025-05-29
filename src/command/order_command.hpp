@@ -30,6 +30,23 @@ class QueryTicketHandler : public CommandHandler {
   TrainManager& train_manager;
   SeatManager& seat_manager;
 
+  struct TicketOrder {
+    int value;
+    int index;
+    FixedString<20> train_id;
+    bool operator<(const TicketOrder& other) const {
+      return value < other.value ||
+             (value == other.value && train_id < other.train_id);
+    }
+    bool operator>(const TicketOrder& other) const {
+      return value > other.value ||
+             (value == other.value && train_id > other.train_id);
+    }
+    bool operator==(const TicketOrder& other) const {
+      return value == other.value && train_id == other.train_id;
+    }
+  };
+
  public:
   QueryTicketHandler(TrainManager& train_manager, SeatManager& seat_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
