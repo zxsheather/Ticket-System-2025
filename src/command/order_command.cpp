@@ -44,12 +44,14 @@ void QueryTicketHandler::execute(const ParamMap& params,
         origin_date > train.sale_date_end) {
       continue;
     }
+    int pos;
     tickets[idx++] = TicketInfo(
         train_id, start_station, end_station,
         TimePoint(origin_date, train.departure_times[start_index]),
         TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
         train.prices[end_index] - train.prices[start_index],
-        seat_manager.querySeat(train_id, origin_date)
+        seat_manager
+            .querySeat(train_id, pos, origin_date - train.sale_date_start)
             .queryAvailableSeat(start_index, end_index));
     if (order == TIME) {
       ticket_order[idx - 1] = {tickets[idx - 1].minutes, idx - 1, train_id};
@@ -114,13 +116,23 @@ void BuyTicketHandler::execute(const ParamMap& params,
     std::cout << "-1\n";
     return;
   }
-  SeatMap seat_map = seat_manager.querySeat(train_id, start_date);
+  int seat_map_pos;
+  SeatMap seat_map = seat_manager.querySeat(train_id, seat_map_pos,
+                                            start_date - train.sale_date_start);
+
+  if (timestamp == "3514") {
+    std::cerr << "SeatMap: ";
+    for (int i = 0; i < train.station_num; ++i) {
+      std::cerr << seat_map.seat_num[i] << ' ';
+    }
+  }
+
   if (ticket_num > train.seat_num) {
     std::cout << "-1\n";
     return;
   }
-  int booked = seat_manager.bookSeat(train_id, start_date, start_index,
-                                     end_index, ticket_num, seat_map);
+  int booked = seat_manager.bookSeat(seat_map_pos, start_index, end_index,
+                                     ticket_num, seat_map);
   if (booked == -1) {
     if (wait) {
       Order order(std::move(username), std::move(train_id), start_date,
@@ -215,8 +227,10 @@ void RefundTicketHandler::execute(const ParamMap& params,
   int start_index = train.queryStationIndex(order.from);
   int end_index = train.queryStationIndex(order.to);
   Date date = order.origin_station_date;
-  SeatMap seat_map = seat_manager.querySeat(order.train_id, date);
-  seat_manager.releaseSeat(order.train_id, date, start_index, end_index,
+  int seat_map_pos;
+  SeatMap seat_map = seat_manager.querySeat(order.train_id, seat_map_pos,
+                                            date - train.sale_date_start);
+  seat_manager.releaseSeat(seat_map_pos, start_index, end_index,
                            order.ticket_num, seat_map);
   order_manager.updateOrderStatus(username, order, REFUNDED);
   sjtu::vector<Order> pending_orders = order_manager.queryPendingOrder(
@@ -232,7 +246,7 @@ void RefundTicketHandler::execute(const ParamMap& params,
       continue;
     }
     int booked = seat_manager.bookSeat(
-        order.train_id, date, pending_order.start_station_index,
+        seat_map_pos, pending_order.start_station_index,
         pending_order.end_station_index, pending_order.ticket_num, seat_map);
     if (booked == 0) {
       order_manager.updateOrderStatus(pending_order.username, pending_order,

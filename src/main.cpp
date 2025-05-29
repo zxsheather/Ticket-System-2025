@@ -11,9 +11,6 @@
 #include "command/user_command.hpp"
 
 int main() {
-  std::cin.tie(nullptr);
-  std::ios::sync_with_stdio(false);
-  // freopen("test/seat_basic.in", "r", stdin);
   CommandSystem command_system;
   UserManager user_manager;
   TrainManager train_manager;

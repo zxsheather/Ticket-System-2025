@@ -37,6 +37,15 @@ struct Date {
     return result;
   }
 
+  int operator-(const Date& other) const {
+    int total_days = 0;
+    for (int m = other.month; m < month; ++m) {
+      total_days += days_in_month[m - 1];
+    }
+    total_days += day - other.day;
+    return total_days;
+  }
+
   bool operator<(const Date& other) const {
     if (month != other.month) return month < other.month;
     return day < other.day;

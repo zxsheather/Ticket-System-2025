@@ -110,7 +110,9 @@ void QueryTrainHandler::execute(const ParamMap& params,
     std::cout << "-1\n";
     return;
   }
-  SeatMap seat_map = seat_manager.querySeat(train_id, date);
+  int pos;
+  SeatMap seat_map =
+      seat_manager.querySeat(train_id, pos, date - train.sale_date_start);
   std::cout << format(train, seat_map.seat_num, date) << '\n';
 }
 
@@ -152,6 +154,7 @@ void QueryTransferHandler::execute(const ParamMap& params,
   TicketInfo ticket1, ticket2;
   int final_start_index, final_transfer_index_from_start,
       final_transfer_index_from_end, final_end_index;
+  Date sale_date_1, sale_date_2;
   for (auto& train_id : train_ids_from_start) {
     Train train;
     train_manager.queryTrain(train_id, train);
@@ -230,6 +233,8 @@ void QueryTransferHandler::execute(const ParamMap& params,
           final_end_index = end_station_indices[j];
           final_transfer_index_from_start = i;
           final_transfer_index_from_end = end_transfer_index;
+          sale_date_1 = train.sale_date_start;
+          sale_date_2 = end_train.sale_date_start;
           ticket1 = TicketInfo(train.train_id, start_station, train.stations[i],
                                start_time, arrival_time, origin_date1,
                                train.prices[i] - train.prices[start_index], 1);
@@ -247,10 +252,11 @@ void QueryTransferHandler::execute(const ParamMap& params,
     std::cout << "0\n";
     return;
   }
-  SeatMap seat_map1 =
-      seat_manager.querySeat(ticket1.train_id, ticket1.origin_date);
-  SeatMap seat_map2 =
-      seat_manager.querySeat(ticket2.train_id, ticket2.origin_date);
+  int _pos;
+  SeatMap seat_map1 = seat_manager.querySeat(ticket1.train_id, _pos,
+                                             ticket1.origin_date - sale_date_1);
+  SeatMap seat_map2 = seat_manager.querySeat(ticket2.train_id, _pos,
+                                             ticket2.origin_date - sale_date_2);
   ticket1.seats = seat_map1.queryAvailableSeat(final_start_index,
                                                final_transfer_index_from_start);
   ticket2.seats = seat_map2.queryAvailableSeat(final_transfer_index_from_end,
