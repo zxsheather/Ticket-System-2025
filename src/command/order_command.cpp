@@ -27,7 +27,9 @@ void QueryTicketHandler::execute(const ParamMap& params,
   ComparisonOrder order =
       params.has('p') ? (params.get('p') == "time" ? TIME : COST) : TIME;
 
-  sjtu::vector<TicketInfo> tickets;
+  TicketInfo tickets[1000];
+  int idx = 0;
+  TicketOrder ticket_order[1000];
 
   for (auto& train_id : result) {
     Train train;
@@ -42,27 +44,32 @@ void QueryTicketHandler::execute(const ParamMap& params,
         origin_date > train.sale_date_end) {
       continue;
     }
-    TicketInfo ticket_info(
+    tickets[idx++] = TicketInfo(
         train_id, start_station, end_station,
         TimePoint(origin_date, train.departure_times[start_index]),
         TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
         train.prices[end_index] - train.prices[start_index],
         seat_manager.querySeat(train_id, origin_date)
             .queryAvailableSeat(start_index, end_index));
-    tickets.push_back(ticket_info);
+    if (order == TIME) {
+      ticket_order[idx - 1] = {tickets[idx - 1].minutes, idx - 1, train_id};
+    } else {
+      ticket_order[idx - 1] = {tickets[idx - 1].price, idx - 1, train_id};
+    }
   }
-  if (tickets.empty()) {
+  if (idx == 0) {
     std::cout << "0\n";
     return;
   }
-  std::cout << tickets.size() << '\n';
+  std::cout << idx << '\n';
   if (order == TIME) {
-    mergeSort(tickets, 0, (int)tickets.size() - 1, TimeComparatorForQuery());
+    mergeSort(ticket_order, 0, idx - 1);
   } else {
-    mergeSort(tickets, 0, (int)tickets.size() - 1, CostComparatorForQuery());
+    mergeSort(ticket_order, 0, idx - 1);
   }
-  for (const auto& ticket : tickets) {
-    std::cout << ticket.format() << '\n';
+  for (int k = 0; k < idx; ++k) {
+    int index = ticket_order[k].index;
+    std::cout << tickets[index].format() << '\n';
   }
 }
 
