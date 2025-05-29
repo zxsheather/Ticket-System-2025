@@ -51,7 +51,8 @@ void QueryTicketHandler::execute(const ParamMap& params,
         TimePoint(origin_date, train.arrival_times[end_index]), origin_date,
         train.prices[end_index] - train.prices[start_index],
         seat_manager
-            .querySeat(train_id, pos, origin_date - train.sale_date_start)
+            .querySeat(train.seat_map_pos, pos,
+                       origin_date - train.sale_date_start)
             .queryAvailableSeat(start_index, end_index));
     if (order == TIME) {
       ticket_order[idx - 1] = {tickets[idx - 1].minutes, idx - 1, train_id};
@@ -117,7 +118,7 @@ void BuyTicketHandler::execute(const ParamMap& params,
     return;
   }
   int seat_map_pos;
-  SeatMap seat_map = seat_manager.querySeat(train_id, seat_map_pos,
+  SeatMap seat_map = seat_manager.querySeat(train.seat_map_pos, seat_map_pos,
                                             start_date - train.sale_date_start);
 
   if (timestamp == "3514") {
@@ -228,7 +229,7 @@ void RefundTicketHandler::execute(const ParamMap& params,
   int end_index = train.queryStationIndex(order.to);
   Date date = order.origin_station_date;
   int seat_map_pos;
-  SeatMap seat_map = seat_manager.querySeat(order.train_id, seat_map_pos,
+  SeatMap seat_map = seat_manager.querySeat(train.seat_map_pos, seat_map_pos,
                                             date - train.sale_date_start);
   seat_manager.releaseSeat(seat_map_pos, start_index, end_index,
                            order.ticket_num, seat_map);

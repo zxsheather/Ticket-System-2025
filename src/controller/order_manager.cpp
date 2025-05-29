@@ -1,7 +1,5 @@
 #include "order_manager.hpp"
 
-#include <cstdint>
-
 #include "../utilities/hash.hpp"
 
 OrderManager::OrderManager() : order_db("order"), pending_db("pending") {}

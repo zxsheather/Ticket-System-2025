@@ -25,8 +25,6 @@ int TrainManager::releaseTrain(const std::string& train_id, Train& train) {
     return -1;
   }
   train = std::move(result[0]);
-  train.is_released = true;
-  train_db.update(train_id, train);
   for (size_t i = 0; i < train.station_num; ++i) {
     station_db.insert(train.stations[i], train.train_id);
   }

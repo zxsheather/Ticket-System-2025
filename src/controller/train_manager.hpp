@@ -22,6 +22,10 @@ class TrainManager {
 
   int queryTrain(const FixedString<20>& train_id, Train& train);
 
+  void updateTrain(const Train& train) {
+    train_db.update(train.train_id, train);
+  }
+
   sjtu::vector<FixedString<20>> queryStation(const std::string& station_id);
 
   sjtu::vector<FixedString<20>> queryStation(const FixedString<30>& station_id);

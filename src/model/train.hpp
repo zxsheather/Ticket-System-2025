@@ -11,15 +11,13 @@ struct Train {
   FixedString<30> stations[MAX_STATION_NUM]{};
   int seat_num{};
   int prices[MAX_STATION_NUM]{};
-  // Time start_time{};
-  //   int travel_times[MAX_STATION_NUM - 1]{};
-  //   int stop_over_times[MAX_STATION_NUM - 2]{};
   Time arrival_times[MAX_STATION_NUM]{};
   Time departure_times[MAX_STATION_NUM]{};
   Date sale_date_start{};
   Date sale_date_end{};
   char type{};
   bool is_released{false};
+  int seat_map_pos{-1};  // Position in the seat database
 
   bool operator<(const Train& other) const { return train_id < other.train_id; }
   bool operator>(const Train& other) const { return train_id > other.train_id; }
