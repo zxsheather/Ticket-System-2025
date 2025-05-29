@@ -72,7 +72,7 @@ int main() {
     // long long elapsed_time =
     //     std::chrono::duration_cast<std::chrono::nanoseconds>(end_time -
     //                                                          start_time)
-    .count();
+    // .count();
     // if (cmd_name == "query_ticket") {
     //   query_ticket_time += elapsed_time;
     // } else if (cmd_name == "buy_ticket") {
