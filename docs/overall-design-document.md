@@ -44,7 +44,7 @@
 1. **交互模块**：解析用户输入的命令，分发给对应的业务逻辑处理器
 2. **用户管理模块**：处理用户相关操作，包括登录、注册、查询、修改等
 3. **车次管理模块**：处理车次相关操作，包括添加、删除、发布、查询等
-4. **票务管理模块**：处理票务相关操作，包括查询车票、购票、候补等
+4. **票务管理模块**：处理票务相关操作，包括直达车票查询、复杂换乘查询、购票、候补等
 5. **订单管理模块**：处理订单相关操作，包括查询订单、退票等
 6. **存储引擎模块**：包括B+树索引、缓存管理、文件读写等功能
 
@@ -429,22 +429,83 @@ class LoginHandler : public CommandHandler {
 
 ### 5.3 换乘查询算法
 
+换乘查询算法实现了复杂的多车次路径搜索，支持时间和价格优化：
+
 ```
-查询从S到T的换乘方案：
-1. 找出所有经过S的车次集合A：
-   使用Hash::hashKey(S)在station_db中查找
-2. 找出所有经过T的车次集合B：
-   使用Hash::hashKey(T)在station_db中查找
-3. 对于A中每个车次train_a：
-   a. 找出train_a经过的所有中间站M（S之后的站点）
-   b. 对于B中每个车次train_b：
-      i. 检查train_b是否经过M（T之前的站点）
-      ii. 计算train_a到达M的时间：date + arrival_times[M在train_a中的索引]
-      iii. 计算train_b从M出发的时间：date + departure_times[M在train_b中的索引]
-      iv. 检查换乘时间是否充足（到达时间 < 出发时间）
-      v. 计算总时间、总价格
-4. 选择最优解(根据排序策略：时间优先或价格优先)
+查询从S到T在日期D的换乘方案：
+
+1. 初始化阶段：
+   a. 查询经过起点S的所有车次：train_manager.queryStation(start_station)
+   b. 查询经过终点T的所有车次：train_manager.queryStation(end_station)
+   c. 为每个终点车次建立有效换乘站点映射：
+      stations_valid_from_end[i][station] = station_index
+      （只包含终点站T之前的站点）
+
+2. 双重嵌套搜索：
+   for each train_from_start in trains_from_start:
+     a. 验证车次在指定日期的有效性：
+        检查 sale_date_start + departure_time <= D <= sale_date_end + departure_time
+     b. 计算起点站的原始发车日期：origin_date1 = D - departure_times[start_index].hour/24
+     c. 计算起点出发时间：start_time = TimePoint(origin_date1, departure_times[start_index])
+     
+     for each intermediate_station_i (start_index+1 to station_num-1):
+       d. 计算到达中转站时间：arrival_time = TimePoint(origin_date1, arrival_times[i])
+       
+       for each train_to_end in trains_to_end:
+         e. 跳过同一车次：if (train_to_end.train_id == train_from_start.train_id) continue
+         f. 检查中转站有效性：
+            if (stations_valid_from_end[j].find(intermediate_station) == end()) continue
+         g. 获取中转站在终点车次中的索引：end_transfer_index
+
+3. 复杂的跨日时间计算：
+   a. 计算第二车次的销售日期范围对应时间点：
+      sale_date_start_timepoint = TimePoint(sale_date_start, departure_times[transfer_index])
+      sale_date_end_timepoint = TimePoint(sale_date_end, departure_times[transfer_index])
+   b. 检查换乘时间可行性：if (sale_date_end_timepoint < arrival_time) continue
+   c. 计算第二车次的原始发车日期：
+      if (sale_date_start_timepoint >= arrival_time):
+          origin_date2 = sale_date_start
+      else:
+          transfer_departure_point = Time(departure_times[transfer_index].hour % 24, minute)
+          if (arrival_time.time <= transfer_departure_point):
+              origin_date2 = arrival_time.date - departure_times[transfer_index].hour/24
+          else:
+              origin_date2 = arrival_time.date - departure_times[transfer_index].hour/24 + 1
+
+4. 成本和时间计算：
+   a. 计算总旅行时间：travel_time = arrive_at_end_station - start_time
+   b. 计算总价格：travel_price = (end_train.prices[end_index] - end_train.prices[transfer_index]) + 
+                                 (start_train.prices[transfer_index] - start_train.prices[start_index])
+
+5. 多级优化比较：
+   时间优先模式（is_time == true）：
+   time_minor = travel_time < min_time ||
+                (travel_time == min_time && travel_price < min_price) ||
+                (travel_time == min_time && travel_price == min_price && train_id作为第三关键字)
+   
+   价格优先模式（is_time == false）：
+   price_minor = travel_price < min_price ||
+                 (travel_price == min_price && travel_time < min_time) ||
+                 (travel_price == min_price && travel_time == min_time && train_id作为第三关键字)
+
+6. 座位可用性查询：
+   a. 查询第一车次座位图：seat_manager.querySeat(seat_map_pos_1, ticket1.origin_date - sale_date_1)
+   b. 查询第二车次座位图：seat_manager.querySeat(seat_map_pos_2, ticket2.origin_date - sale_date_2)
+   c. 计算各段座位余量：
+      ticket1.seats = seat_map1.queryAvailableSeat(start_index, transfer_index)
+      ticket2.seats = seat_map2.queryAvailableSeat(transfer_index, end_index)
+
+7. 结果输出：
+   if (无有效换乘方案): 输出 "0"
+   else: 输出两行TicketInfo格式的车票信息
 ```
+
+**算法特点**：
+- **O(n × m × k)复杂度**：n为起点车次数，m为终点车次数，k为平均站点数
+- **精确的跨日计算**：处理车次跨越多日的复杂时间逻辑
+- **多级排序优化**：支持时间/价格优先的多关键字比较
+- **座位集成查询**：换乘路径确定后实时查询座位可用性
+- **边界条件处理**：销售日期验证、同车次过滤、换乘时间可行性检查
 
 ### 5.4 座位预订算法
 
@@ -633,27 +694,34 @@ public:
 
 ```cpp
 class UserManager {
+private:
+    BPT<uint64_t, User> user_db;
+    sjtu::map<std::string, int> logged_in_users{};  // from username to privilege
+    bool is_first_user{false};
+
 public:
-  int addUser(const std::string& cur_username, const std::string& username,
-              const std::string& password, const std::string& name,
-              const std::string& mail_addr, const int& privilege);
+    UserManager();
 
-  int login(const std::string& username, const std::string& password);
+    int addUser(const std::string& cur_username, const std::string& username,
+                const std::string& password, const std::string& name,
+                const std::string& mail_addr, const int& privilege);
 
-  int logout(const std::string& username);
+    int login(const std::string& username, const std::string& password);
 
-  sjtu::pair<int, UserProfile> queryProfile(const std::string& cur_username,
-                                            const std::string& username);
+    int logout(const std::string& username);
 
-  sjtu::pair<int, UserProfile> modifyProfile(const std::string& cur_username,
-                                             const std::string& username,
-                                             const std::string& password,
-                                             const std::string& name,
-                                             const std::string& mail_addr,
-                                             const int& privilege);
+    sjtu::pair<int, UserProfile> queryProfile(const std::string& cur_username,
+                                              const std::string& username);
 
-  // 检查用户是否已登录，返回权限级别或-1
-  int isLoggedIn(const std::string& username);
+    sjtu::pair<int, UserProfile> modifyProfile(const std::string& cur_username,
+                                               const std::string& username,
+                                               const std::string& password,
+                                               const std::string& name,
+                                               const std::string& mail_addr,
+                                               const int& privilege);
+
+    // 检查用户是否已登录，返回权限级别或-1
+    int isLoggedIn(const std::string& username);
 };
 ```
 
@@ -732,12 +800,35 @@ public:
 class OrderManager {
 private:
     BPT<FixedString<20>, Order> order_db;    // 用户订单存储
-    BPT<long long, Order> pending_db;        // 候补订单存储
+    BPT<uint64_t, Order> pending_db;         // 候补订单存储
 
 public:
     OrderManager();
     
     // 添加订单
+    void addOrder(const Order& order);
+    
+    // 添加候补订单
+    void addPendingOrder(const Order& order);
+    
+    // 更新订单状态
+    void updateOrderStatus(const std::string& username, const Order& order,
+                          OrderStatus status);
+    void updateOrderStatus(const FixedString<20>& username, const Order& order,
+                          OrderStatus status);
+    
+    // 从候补队列移除订单
+    void removeFromPending(const FixedString<20>& train_id, const Date& date,
+                          const Order& order);
+    
+    // 查询用户订单
+    sjtu::vector<Order> queryOrder(const std::string& username);
+    
+    // 查询候补订单
+    sjtu::vector<Order> queryPendingOrder(const FixedString<20>& train_id,
+                                         const Date& date);
+};
+```
     void addOrder(const Order& order);
     
     // 添加候补订单
@@ -779,10 +870,188 @@ public:
 **主要命令处理器包括**：
 
 - **用户管理命令**：`LoginHandler`, `AddUserHandler`, `LogoutHandler`, `QueryProfileHandler`, `ModifyProfileHandler`
-- **车次管理命令**：`AddTrainHandler`, `DeleteTrainHandler`, `ReleaseTrainHandler`, `QueryTrainHandler`, `QueryTransferHandler`  
-- **订票管理命令**：`QueryTicketHandler`, `BuyTicketHandler`, `RefundTicketHandler`, `QueryOrderHandler`
+- **车次管理命令**：`AddTrainHandler`, `DeleteTrainHandler`, `ReleaseTrainHandler`, `QueryTrainHandler`
+- **票务查询命令**：`QueryTicketHandler`, `QueryTransferHandler`
+- **订票管理命令**：`BuyTicketHandler`, `RefundTicketHandler`, `QueryOrderHandler`
 
 每个处理器负责解析参数、调用相应的管理器方法并格式化输出结果。
+
+#### 命令处理器接口
+
+**用户命令处理器**
+```cpp
+class LoginHandler : public CommandHandler {
+private:
+    UserManager& user_manager;
+public:
+    LoginHandler(UserManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class AddUserHandler : public CommandHandler {
+private:
+    UserManager& user_manager;
+public:
+    AddUserHandler(UserManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class LogoutHandler : public CommandHandler {
+private:
+    UserManager& user_manager;
+public:
+    LogoutHandler(UserManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class QueryProfileHandler : public CommandHandler {
+private:
+    UserManager& user_manager;
+public:
+    QueryProfileHandler(UserManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class ModifyProfileHandler : public CommandHandler {
+private:
+    UserManager& user_manager;
+public:
+    ModifyProfileHandler(UserManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+```
+
+**车次命令处理器**
+```cpp
+class AddTrainHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+public:
+    AddTrainHandler(TrainManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class DeleteTrainHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+public:
+    DeleteTrainHandler(TrainManager& manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class ReleaseTrainHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+    SeatManager& seat_manager;
+public:
+    ReleaseTrainHandler(TrainManager& manager, SeatManager& seat_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class QueryTrainHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+    SeatManager& seat_manager;
+public:
+    QueryTrainHandler(TrainManager& train_manager, SeatManager& seat_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class QueryTransferHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+    SeatManager& seat_manager;
+public:
+    QueryTransferHandler(TrainManager& train_manager, SeatManager& seat_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+```
+
+**订单命令处理器**
+```cpp
+class QueryTicketHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+    SeatManager& seat_manager;
+public:
+    QueryTicketHandler(TrainManager& train_manager, SeatManager& seat_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class BuyTicketHandler : public CommandHandler {
+private:
+    TrainManager& train_manager;
+    SeatManager& seat_manager;
+    UserManager& user_manager;
+    OrderManager& order_manager;
+public:
+    BuyTicketHandler(TrainManager& train_manager, SeatManager& seat_manager,
+                     UserManager& user_manager, OrderManager& order_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class QueryOrderHandler : public CommandHandler {
+private:
+    OrderManager& order_manager;
+    UserManager& user_manager;
+public:
+    QueryOrderHandler(OrderManager& order_manager, UserManager& user_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+
+class RefundTicketHandler : public CommandHandler {
+private:
+    OrderManager& order_manager;
+    UserManager& user_manager;
+    TrainManager& train_manager;
+    SeatManager& seat_manager;
+public:
+    RefundTicketHandler(OrderManager& order_manager, UserManager& user_manager,
+                        TrainManager& train_manager, SeatManager& seat_manager);
+    void execute(const ParamMap& params, const std::string& timestamp) override;
+};
+```
+
+#### 票务信息结构
+
+```cpp
+// 单张票务信息
+struct TicketInfo {
+    FixedString<20> train_id{};
+    FixedString<30> from{};
+    FixedString<30> to{};
+    TimePoint start_time{};
+    TimePoint end_time{};
+    Date origin_date{};
+    int price{};
+    int seats{};
+    int minutes{};
+
+    TicketInfo() = default;
+    TicketInfo(const FixedString<20>& train_id, const FixedString<30>& from,
+               const FixedString<30>& to, const TimePoint& start_time,
+               const TimePoint& end_time, const Date& origin_date, int price,
+               int seats);
+
+    std::string format() const;
+};
+
+// 换乘票务信息结构
+struct TransferTicketInfo {
+    TicketInfo first_ticket{};   // 第一段车票信息
+    TicketInfo second_ticket{};  // 第二段车票信息
+
+    std::string format() const {
+        return first_ticket.format() + '\n' + second_ticket.format();
+    }
+};
+```
+
+**接口特点**：
+- **一致的依赖注入**：所有命令处理器使用引用参数进行依赖注入，确保高效的内存访问
+- **模块化设计**：每个命令处理器专注于特定功能，支持清晰的职责分离
+- **统一执行接口**：所有处理器实现相同的execute接口，支持多态调用
+- **实时数据集成**：与管理器模块深度集成，提供实时的数据查询和更新操作
 
 ## 7. 容错与异常处理
 
@@ -853,45 +1122,107 @@ public:
 
 ```
 /
-├── src/
-│   ├── stl/           # STL替代实现
-│   ├── storage/       # 存储引擎实现
-│   ├── command/       # 命令解析与处理
-│   ├── user/          # 用户管理模块
-│   ├── train/         # 车次管理模块
-│   ├── ticket/        # 票务管理模块
-│   ├── order/         # 订单管理模块
-│   └── main.cpp       # 主程序
-├── docs/              # 文档
-├── testcases/         # 测试用例
-└── CMakeLists.txt         # 构建脚本
+├── src/                      # 源代码目录
+│   ├── command/              # 命令处理模块
+│   │   ├── command_system.cpp/.hpp    # 命令系统核心
+│   │   ├── user_command.cpp/.hpp      # 用户相关命令处理器
+│   │   ├── train_command.cpp/.hpp     # 车次相关命令处理器
+│   │   ├── order_command.cpp/.hpp     # 订单相关命令处理器
+│   │   └── system_command.cpp/.hpp    # 系统命令处理器
+│   ├── controller/           # 业务逻辑控制层
+│   │   ├── user_manager.cpp/.hpp      # 用户管理器
+│   │   ├── train_manager.cpp/.hpp     # 车次管理器
+│   │   ├── seat_manager.cpp/.hpp      # 座位管理器
+│   │   └── order_manager.cpp/.hpp     # 订单管理器
+│   ├── model/                # 数据模型层
+│   │   ├── user.hpp          # 用户数据结构
+│   │   ├── train.hpp         # 车次数据结构
+│   │   ├── seat.hpp          # 座位数据结构
+│   │   ├── order.hpp         # 订单数据结构
+│   │   ├── ticket.hpp        # 票务信息结构
+│   │   ├── time.hpp          # 时间相关结构
+│   │   └── station.hpp       # 站点相关结构
+│   ├── storage/              # 存储引擎层
+│   │   ├── bplus_tree.cpp/.hpp        # B+树索引实现
+│   │   ├── memory_river.hpp           # 内存河流文件访问
+│   │   ├── cache.hpp                  # 缓存管理系统
+│   │   └── index_block.hpp            # 索引块管理
+│   ├── utilities/            # 工具函数模块
+│   │   ├── hash.hpp          # 哈希函数（支持中文）
+│   │   ├── limited_sized_string.hpp  # 固定大小字符串
+│   │   ├── merge_sort.hpp             # 归并排序算法
+│   │   └── parse_by_char.hpp          # 字符解析工具
+│   ├── stl/                  # STL替代实现
+│   │   ├── vector.hpp        # 动态数组
+│   │   ├── map.hpp           # 映射容器
+│   │   ├── list.hpp          # 链表容器
+│   │   ├── priority_queue.hpp # 优先队列
+│   │   ├── hash_map.hpp      # 哈希映射
+│   │   ├── utility.hpp       # 实用工具（pair等）
+│   │   └── exceptions.hpp    # 异常处理
+│   └── main.cpp              # 主程序入口
+├── docs/                     # 项目文档
+│   ├── overall-design-document.md  # 总体设计文档
+│   └── acquirement.md              # 需求文档
+├── testcases/                # 测试用例
+│   ├── *.in                  # 输入测试文件
+│   ├── *.out                 # 期望输出文件
+│   ├── config.*.js/.yml/.json # 测试配置文件
+│   └── extract.py            # 测试工具脚本
+├── build/                    # 构建输出目录
+├── code                      # 可执行文件
+├── CMakeLists.txt           # CMake构建脚本
+├── clean.sh                 # 清理脚本
+├── run-test                 # 测试运行脚本
+└── README.md                # 项目说明文档
 ```
 
 ### 10.2 实现计划
 
-1. **第一阶段**：实现基础设施
-   - STL替代容器
-   - B+树索引结构
-   - 内存/文件管理系统
+#### 第一阶段（已完成）：基础设施建设
+✅ **完成状态**：已完成核心基础设施
+- **STL替代容器**：实现vector, map, list, priority_queue, hash_map等
+- **B+树索引结构**：完整的模板化B+树实现，支持文件持久化
+- **内存/文件管理系统**：MemoryRiver高效文件访问，缓存管理
+- **基础数据结构**：FixedString, 哈希函数（支持中文），时间处理系统
+- **异常处理框架**：自定义异常类体系
 
-2. **第二阶段**：实现核心功能
-   - 命令解析系统
-   - 用户管理模块
-   - 车次管理模块
+#### 第二阶段（已完成）：核心业务功能
+✅ **完成状态**：核心模块全部实现
+- **命令解析系统**：CommandSystem完整框架，ParamMap参数解析
+- **用户管理模块**：用户注册/登录/登出/查询/修改，权限验证
+- **车次管理模块**：车次添加/删除/发布/查询，站点索引系统
+- **座位管理模块**：SeatManager完整实现，支持座位预订/释放
+- **订单管理模块**：订单创建/查询/退票，候补队列处理
 
-3. **第三阶段**：实现高级功能
-   - 票务查询与购买
-   - 换乘查询算法
-   - 候补订单系统
+#### 第三阶段（已完成）：高级查询功能
+✅ **完成状态**：复杂查询算法已实现
+- **票务查询系统**：支持时间/价格排序的直达车票查询
+- **换乘查询算法**：O(n×m×k)复杂度的全局换乘路径搜索
+- **候补订单系统**：自动候补队列处理，FIFO优先级管理
+- **座位集成查询**：实时余票信息，跨日期时间计算
 
-4. **第四阶段**：优化与测试
-   - 性能优化
-   - 内存管理优化
-   - 全面测试
+#### 第四阶段（进行中）：系统优化与完善
+🔄 **当前状态**：持续优化中
+- **性能优化**：查询缓存机制，内存管理优化
+- **测试完善**：单元测试，集成测试，压力测试覆盖
+- **边界条件处理**：异常情况处理，数据一致性保证
+- **代码重构**：代码质量提升，文档完善
 
-## 11. GUI扩展设计
+#### 第五阶段（计划中）：GUI图形界面开发
+⏳ **预计时间**：下一阶段实现
+- **GUI框架选择**：评估Qt/GTK+/wxWidgets等跨平台GUI框架
+- **界面设计**：用户友好的图形界面设计
+- **前端适配**：将现有命令行接口适配为GUI接口
+- **用户体验优化**：交互流程优化，视觉设计改进
 
-为便于未来扩展图形用户界面(GUI)，系统在设计时采取了以下策略：
+## 11. GUI扩展设计（下一阶段规划）
+
+> **注意**：GUI功能当前尚未实现，以下为下一阶段的设计规划。
+
+### 11.1 设计理念
+
+为便于未来扩展图形用户界面，当前系统已采用了有利于GUI扩展的架构设计：
 
 ### 11.1 模型-视图分离
 
@@ -902,50 +1233,72 @@ public:
 |     视图      |    |    控制器     |    |     模型      |
 |   (View)      |<-->| (Controller)  |<-->|    (Model)    |
 +---------------+    +---------------+    +---------------+
-      GUI界面           业务逻辑           数据与状态
+     CLI/GUI界面       业务逻辑层         数据模型层
 ```
 
-- **模型层**：包含核心数据结构和业务逻辑
-- **控制器**：处理用户输入并更新模型
-- **视图层**：负责数据可视化展示
+- **模型层**：包含核心数据结构和业务逻辑（已实现）
+- **控制器层**：处理用户输入并调用业务逻辑（已实现）
+- **视图层**：当前为CLI界面，未来扩展为GUI界面
 
 这种分离确保命令行版本的所有业务逻辑可直接被GUI版本复用。
 
-### 11.2 结构化数据返回
+### 11.2 为GUI扩展预留的架构特性
 
-所有业务方法返回结构化数据而非格式化字符串：
+当前系统已采用的有利于GUI扩展的设计模式：
+
+#### 11.2.1 结构化数据返回
+
+当前业务方法已返回结构化数据对象而非格式化字符串：
 
 ```cpp
-// 不使用格式化字符串作为返回值
-struct TicketQueryResult {
-    int totalCount;
-    struct TicketInfo {
-        std::string trainID;
-        std::string from;
-        std::string to;
-        std::string departureTime;
-        std::string arrivalTime;
-        int price;
-        int availableSeats;
-    };
-    sjtu::vector<TicketInfo> tickets;
-};
-
-// 业务方法返回结构化数据
-class TicketService {
-public:
-    TicketQueryResult queryTicket(const std::string& from, const std::string& to,
-                               const std::string& date, const std::string& sortType);
-};
-
-// 当前CLI版本格式化为字符串
-class CommandHandler {
-private:
-    TicketService service;
+// 已实现的结构化数据类型
+struct TicketInfo {
+    FixedString<20> train_id{};
+    FixedString<30> from{};
+    FixedString<30> to{};
+    TimePoint start_time{};
+    TimePoint end_time{};
+    Date origin_date{};
+    int price{};
+    int seats{};
+    int minutes{};
     
-    std::string formatTicketQueryResult(const TicketQueryResult& result) {
-        // 格式化逻辑...
-    }
+    std::string format() const;  // CLI格式化方法
+};
+
+struct TransferTicketInfo {
+    TicketInfo first_ticket{};
+    TicketInfo second_ticket{};
+    
+    std::string format() const;  // CLI格式化方法
+};
+
+// 业务管理器返回结构化数据
+class TrainManager {
+public:
+    sjtu::vector<FixedString<20>> queryStation(const std::string& station_id);
+    // 其他方法...
+};
+```
+
+#### 11.2.2 命令处理器模式
+
+当前采用的命令处理器模式便于适配GUI事件：
+
+```cpp
+// 已实现的命令处理器基类
+class CommandHandler {
+public:
+    virtual void execute(const ParamMap& params, const std::string& timestamp) = 0;
+    virtual ~CommandHandler() = default;
+};
+
+// GUI扩展时可改为返回结构化结果
+template<typename ResultType>
+class GUICommandHandler {
+public:
+    virtual ResultType execute(const ParamMap& params) = 0;
+    virtual ~GUICommandHandler() = default;
 };
 ```
 
@@ -954,20 +1307,19 @@ private:
 实现观察者模式以支持GUI事件处理：
 
 ```cpp
-// 事件监听器接口
+// 事件监听器接口（未来GUI扩展时实现）
 class StateChangeListener {
 public:
     virtual void onStateChanged(const std::string& stateType, void* data) = 0;
     virtual ~StateChangeListener() {}
 };
 
-// 系统状态管理
+// 系统状态管理（未来GUI扩展时实现）
 class SystemState {
 private:
     sjtu::vector<StateChangeListener*> listeners;
 public:
     void addListener(StateChangeListener* listener);
-    void removeListener(StateChangeListener* listener);
     void notifyStateChanged(const std::string& stateType, void* data);
 };
 ```
@@ -977,7 +1329,7 @@ public:
 设计异步操作机制，防止GUI界面在长时间操作中阻塞：
 
 ```cpp
-// 异步操作结果回调
+// 异步操作结果回调（未来GUI扩展时实现）
 template<typename T>
 using Callback = std::function<void(T)>;
 
@@ -985,18 +1337,43 @@ class AsyncTicketService {
 public:
     void queryTicketAsync(const std::string& from, const std::string& to,
                        const std::string& date, const std::string& sortType,
-                       Callback<TicketQueryResult> callback);
+                       Callback<TicketInfo> callback);
                        
     void buyTicketAsync(const std::string& username, const std::string& trainID,
                      const std::string& date, int num, const std::string& from,
                      const std::string& to, bool waitlist,
-                     Callback<OrderResult> callback);
+                     Callback<Order> callback);
 };
 ```
 
-### 11.5 详细错误信息
+### 11.5 GUI界面规划
 
-使用结构化错误返回而非简单的成功/失败码：
+> **未来规划**：以下为下一阶段GUI开发的界面设计规划，当前尚未实现。
+
+未来GUI实现将包括以下主要界面：
+
+#### 11.5.1 主界面设计
+- **顶部菜单栏**：文件、用户、车次、订单等功能菜单
+- **左侧导航栏**：用户登录状态、快速功能入口
+- **中央工作区**：动态切换不同功能模块的界面
+- **底部状态栏**：系统状态、操作提示信息
+
+#### 11.5.2 核心功能界面
+- **用户管理界面**：登录/注册表单，用户信息展示和编辑
+- **车票查询界面**：出发地/目的地选择，日期选择，结果表格展示
+- **换乘查询界面**：多段行程规划，路径可视化展示
+- **订单管理界面**：订单列表，状态跟踪，退票操作
+- **车次管理界面**：管理员专用，车次信息管理
+
+#### 11.5.3 用户体验特性
+- **响应式设计**：适配不同屏幕尺寸
+- **实时更新**：座位余量、订单状态的实时刷新
+- **操作反馈**：加载提示、操作成功/失败消息
+- **数据可视化**：车次路线图、座位分布图
+
+## 12. 项目状态总结
+
+使用结构化错误返回而非简单的成功/失败码：（待实现）
 
 ```cpp
 struct OperationResult {
@@ -1058,37 +1435,9 @@ struct Result : public OperationResult {
    - 用户管理
    - 系统状态监控
 
-### 11.7 设计适配
+通过以上架构设计，系统已为未来GUI扩展奠定了良好基础，可以在保持核心业务逻辑不变的前提下，轻松扩展为图形界面应用。
 
-将现有命令行接口适配为GUI接口：
-
-```cpp
-// 命令行接口
-class CommandLineInterface {
-private:
-    void executeCommand(const std::string& cmd, const ParamMap& params);
-};
-
-// GUI适配器
-class GUIAdapter {
-private:
-    UserService userService;
-    TrainService trainService;
-    TicketService ticketService;
-    OrderService orderService;
-    
-public:
-    // GUI调用的方法
-    Result<User> login(const std::string& username, const std::string& password);
-    Result<sjtu::vector<TicketInfo>> searchTickets(const SearchCriteria& criteria);
-    Result<Order> purchaseTicket(const TicketPurchaseInfo& info);
-    // ...其他方法
-};
-```
-
-通过以上设计，系统可以在保持核心业务逻辑不变的前提下，轻松扩展为GUI应用。
-
-## 12. 当前实现状态
+## 12. 项目状态总结
 
 ### 12.1 已完成模块
 
@@ -1148,9 +1497,12 @@ public:
 
 ✅ **换乘查询模块**
 - QueryTransferHandler完整实现
-- 换乘路径搜索算法完整
-- 时间和价格计算逻辑完整
-- 支持时间优先和价格优先排序
+- 复杂换乘路径搜索算法（O(n × m × k)复杂度）
+- 跨日期时间计算和验证逻辑
+- 多级比较排序（时间/价格优先+车次ID tie-breaker）
+- 与座位管理系统深度集成的余票查询
+- TransferTicketInfo结构化数据封装
+- 边界条件处理和异常安全保证
 
 ### 12.2 待实现模块
 
@@ -1166,11 +1518,8 @@ public:
 
 ### 12.3 技术债务
 
-- [ ] B+树模板实例化需要统一管理  
-- [ ] 座位管理器的错误处理需要完善
 - [ ] 异常处理机制需要完善
 - [ ] 日志系统需要添加
-- [ ] 内存泄漏检测和修复
 - [ ] QueryTicket性能瓶颈需要进一步优化
 
 ## 13. 总结
