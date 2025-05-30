@@ -134,12 +134,6 @@ struct TimePoint {
     ... // 其他时间点操作方法
 };
 
-// 车次+日期的复合键，用于座位管理
-struct UniTrain {
-    FixedString<20> train_id;
-    Date date;
-    // 比较运算符 <, >, ==, !=, <=, >=
-};
 ```
 
 #### 3.2.3 座位管理数据结构
@@ -252,7 +246,6 @@ struct Order {
 - 连续存储模式：同一车次不同日期的座位图顺序存放
 - 通过偏移计算快速定位：`seat_map_pos = start_pos + date_offset * sizeof(SeatMap)`
 
-所有索引都使用`Hash::hashKey`函数生成哈希键，支持中文字符串的高效哈希。
 
 ## 4. 存储系统设计
 
@@ -360,12 +353,6 @@ class LRUCache {
 - B+树索引文件：`{功能名}.index`
 - B+树数据文件：`{功能名}.block`
 
-### 4.4 内存/磁盘交互策略
-
-1. **延迟写入**：修改操作首先在内存中进行，定期批量写入磁盘
-2. **预读取**：根据访问局部性，预读可能使用的数据块
-3. **分块读写**：数据以块为单位进行IO操作，减少IO次数
-4. **顺序写入**：新数据优先顺序写入，提高写入性能
 
 ## 5. 核心算法设计
 
@@ -410,10 +397,8 @@ class LoginHandler : public CommandHandler {
 
 ```
 查询从站点S到站点T在日期D的车票：
-1. 通过站点索引找出经过S的车次集合A：
-   使用Hash::hashKey(S)在station_db中查找
-2. 通过站点索引找出经过T的车次集合B：
-   使用Hash::hashKey(T)在station_db中查找
+1. 通过站点索引找出经过S的车次集合A
+2. 通过站点索引找出经过T的车次集合B
 3. 求交集C = A ∩ B，筛选同时经过S和T的车次
 4. 对每个车次train_id in C：
    a. 在train_db中查询车次详细信息
@@ -1055,7 +1040,7 @@ struct TransferTicketInfo {
 
 ## 7. 容错与异常处理
 
-系统设计了完整的异常处理机制(项目第一阶段不实现)：
+系统设计了完整的异常处理机制(目前未实现)：
 
 1. **输入验证**：严格验证用户输入的参数格式和合法性
 2. **权限检查**：所有操作进行权限验证，防止非法访问
@@ -1453,7 +1438,6 @@ struct Result : public OperationResult {
 - User数据结构及序列化
 - Train数据结构（支持到达/出发时间）
 - Date/Time/TimePoint时间处理系统
-- UniTrain复合键设计
 - SeatMap直接座位管理
 
 ✅ **命令解析系统**
@@ -1466,7 +1450,6 @@ struct Result : public OperationResult {
 - 用户注册、登录、登出
 - 用户信息查询和修改
 - 权限验证机制
-- 密码安全处理
 
 ✅ **车次管理模块**
 - 车次添加、删除、发布
@@ -1501,7 +1484,6 @@ struct Result : public OperationResult {
 - 跨日期时间计算和验证逻辑
 - 多级比较排序（时间/价格优先+车次ID tie-breaker）
 - 与座位管理系统深度集成的余票查询
-- TransferTicketInfo结构化数据封装
 - 边界条件处理和异常安全保证
 
 ### 12.2 待实现模块
