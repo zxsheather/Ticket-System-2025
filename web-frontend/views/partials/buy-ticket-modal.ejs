@@ -1,0 +1,218 @@
+<!-- 购票模态框 -->
+<div class="modal fade" id="buyTicketModal" tabindex="-1" aria-labelledby="buyTicketModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="buyTicketModalLabel">
+          <i class="fas fa-ticket-alt me-2"></i>购买车票
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="mb-3">车次信息</h6>
+            <table class="table table-sm">
+              <tr>
+                <td><strong>车次号:</strong></td>
+                <td id="modal-train-id">-</td>
+              </tr>
+              <tr>
+                <td><strong>路线:</strong></td>
+                <td id="modal-route">-</td>
+              </tr>
+              <tr>
+                <td><strong>日期:</strong></td>
+                <td id="modal-date">-</td>
+              </tr>
+              <tr>
+                <td><strong>单价:</strong></td>
+                <td id="modal-price" class="text-danger fw-bold">-</td>
+              </tr>
+              <tr>
+                <td><strong>余票:</strong></td>
+                <td id="modal-seats" class="text-success">-</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <form id="buyTicketForm">
+              <input type="hidden" name="trainId" />
+              <input type="hidden" name="from" />
+              <input type="hidden" name="to" />
+              <input type="hidden" name="date" />
+              
+              <div class="mb-3">
+                <label for="ticketNum" class="form-label">购票数量</label>
+                <input type="number" class="form-control" id="ticketNum" name="num" 
+                       min="1" max="100" value="1" required>
+                <div class="form-text">最多可购买100张</div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="queueOption" name="queue">
+                  <label class="form-check-label" for="queueOption">
+                    加入候补队列
+                  </label>
+                  <div class="form-text">票量不足时自动排队，有票时优先购买</div>
+                </div>
+              </div>
+              
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>购票说明:</strong>
+                <ul class="mb-0 mt-2">
+                  <li>购票成功后请及时取票</li>
+                  <li>退票需在发车前办理</li>
+                  <li>候补购票不收取额外费用</li>
+                </ul>
+              </div>
+              
+              <div id="totalPrice" class="text-center mb-3">
+                <span class="fs-5">总价: <span class="text-danger fw-bold">¥<span id="totalAmount">0</span></span></span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-2"></i>取消
+        </button>
+        <button type="button" class="btn btn-primary" id="confirmBuyButton">
+          <i class="fas fa-credit-card me-2"></i>确认购买
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('buyTicketModal');
+  const form = document.getElementById('buyTicketForm');
+  const numInput = document.getElementById('ticketNum');
+  const totalAmountSpan = document.getElementById('totalAmount');
+  const confirmButton = document.getElementById('confirmBuyButton');
+  
+  let currentPrice = 0;
+  
+  // 数量变化时更新总价
+  if (numInput) {
+    numInput.addEventListener('input', function() {
+      const num = parseInt(this.value) || 0;
+      const total = num * currentPrice;
+      if (totalAmountSpan) {
+        totalAmountSpan.textContent = total;
+      }
+    });
+  }
+  
+  // 模态框显示时的处理
+  if (modal) {
+    modal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      if (!button) return;
+      
+      const ticketCard = button.closest('.ticket-card');
+      if (!ticketCard) return;
+      
+      // 获取车票信息
+      const trainId = ticketCard.dataset.trainId || button.dataset.trainId;
+      const from = ticketCard.dataset.from || button.dataset.from;
+      const to = ticketCard.dataset.to || button.dataset.to;
+      const date = ticketCard.dataset.date || button.dataset.date;
+      const price = parseInt(ticketCard.dataset.price || button.dataset.price || 0);
+      const seats = ticketCard.dataset.seats || button.dataset.seats;
+      
+      currentPrice = price;
+      
+      // 填充模态框信息
+      document.getElementById('modal-train-id').textContent = trainId;
+      document.getElementById('modal-route').textContent = `${from} → ${to}`;
+      document.getElementById('modal-date').textContent = date;
+      document.getElementById('modal-price').textContent = `¥${price}`;
+      document.getElementById('modal-seats').textContent = seats;
+      
+      // 设置表单隐藏字段
+      form.querySelector('input[name="trainId"]').value = trainId;
+      form.querySelector('input[name="from"]').value = from;
+      form.querySelector('input[name="to"]').value = to;
+      form.querySelector('input[name="date"]').value = date;
+      
+      // 更新总价
+      const num = parseInt(numInput.value) || 1;
+      totalAmountSpan.textContent = num * price;
+    });
+  }
+  
+  // 确认购买按钮处理
+  if (confirmButton) {
+    confirmButton.addEventListener('click', function() {
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
+      
+      // 显示加载状态
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>处理中...';
+      
+      // 发送购票请求
+      fetch('/api/order/buy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          // 购票成功
+          bootstrap.Modal.getInstance(modal).hide();
+          
+          if (result.queued) {
+            showNotification('已加入候补队列，有票时将自动购买', 'info');
+          } else {
+            showNotification(`购票成功！总价: ¥${result.totalPrice}`, 'success');
+          }
+          
+          // 刷新页面或更新数据
+          setTimeout(() => {
+            if (window.location.pathname === '/orders') {
+              window.location.reload();
+            } else {
+              window.location.href = '/orders';
+            }
+          }, 2000);
+        } else {
+          showNotification('购票失败: ' + result.message, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('购票错误:', error);
+        showNotification('网络错误，请重试', 'error');
+      })
+      .finally(() => {
+        // 恢复按钮状态
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-credit-card me-2"></i>确认购买';
+      });
+    });
+  }
+});
+
+// 显示通知的辅助函数
+function showNotification(message, type = 'info') {
+  if (window.app && window.app.showNotification) {
+    window.app.showNotification(message, type);
+  } else {
+    alert(message);
+  }
+}
+</script>

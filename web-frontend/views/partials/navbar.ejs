@@ -1,0 +1,126 @@
+<!-- 导航栏组件 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-train"></i>
+      火车票管理系统
+    </a>
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link <%= currentPage === 'home' ? 'active' : '' %>" href="/">
+            <i class="fas fa-home"></i> 首页
+          </a>
+        </li>
+        <% if (user) { %>
+          <li class="nav-item">
+            <a class="nav-link <%= currentPage === 'orders' ? 'active' : '' %>" href="/orders">
+              <i class="fas fa-ticket-alt"></i> 我的订单
+            </a>
+          </li>
+          <% if (user.privilege >= 10) { %>
+            <li class="nav-item">
+              <a class="nav-link <%= currentPage === 'admin' ? 'active' : '' %>" href="/admin">
+                <i class="fas fa-cog"></i> 系统管理
+              </a>
+            </li>
+          <% } %>
+        <% } %>
+      </ul>
+      
+      <ul class="navbar-nav">
+        <% if (user) { %>
+          <!-- 通知铃铛 -->
+          <li class="nav-item dropdown me-3">
+            <a class="nav-link position-relative" href="#" id="notificationBell" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-bell"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="display: none;">
+                0
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end notification-dropdown" id="notificationDropdown" style="width: 350px; max-height: 400px; overflow-y: auto;">
+              <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h6 class="mb-0">通知消息</h6>
+                <button class="btn btn-sm btn-outline-primary" id="markAllRead">
+                  <i class="fas fa-check-double"></i> 全部已读
+                </button>
+              </div>
+              <div class="notification-list">
+                <div class="text-center text-muted p-3">正在加载...</div>
+              </div>
+              <div class="p-2 border-top text-center">
+                <a href="/notifications" class="btn btn-sm btn-link">查看全部通知</a>
+              </div>
+            </div>
+          </li>
+          
+          <!-- 用户菜单 -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-user"></i> <%= user.username %>
+              <% if (user.privilege >= 10) { %>
+                <span class="badge bg-warning text-dark ms-1">管理员</span>
+              <% } %>
+            </a>
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item" href="/profile">
+                  <i class="fas fa-user-edit"></i> 个人资料
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="#" onclick="logout()">
+                  <i class="fas fa-sign-out-alt"></i> 退出登录
+                </a>
+              </li>
+            </ul>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/login">
+              <i class="fas fa-sign-in-alt"></i> 登录
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/register">
+              <i class="fas fa-user-plus"></i> 注册
+            </a>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<% if (user) { %>
+<script>
+function logout() {
+  if (confirm('确定要退出登录吗？')) {
+    fetch('/api/user/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = '/';
+      } else {
+        alert('退出登录失败: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('退出登录错误:', error);
+      alert('退出登录失败，请重试');
+    });
+  }
+}
+</script>
+<% } %>

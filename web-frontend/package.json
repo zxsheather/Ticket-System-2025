@@ -1,0 +1,43 @@
+{
+  "name": "ticket-system-web-frontend",
+  "version": "1.0.0",
+  "description": "Web GUI frontend for Ticket System 2025",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "stop": "pkill -f 'node.*app.js'",
+    "restart": "npm run stop && npm start",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "express-validator": "^7.0.1",
+    "body-parser": "^1.20.2",
+    "multer": "^2.0.0",
+    "cors": "^2.8.5",
+    "socket.io": "^4.7.2",
+    "uuid": "^9.0.0",
+    "moment": "^2.29.4",
+    "winston": "^3.10.0",
+    "ejs": "^3.1.9",
+    "express-rate-limit": "^6.8.1",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "ticket-system",
+    "railway",
+    "booking",
+    "web-gui"
+  ],
+  "author": "Ticket System Team",
+  "license": "MIT"
+}
