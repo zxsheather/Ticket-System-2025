@@ -50,6 +50,7 @@ class QueryTicketHandler : public CommandHandler {
  public:
   QueryTicketHandler(TrainManager& train_manager, SeatManager& seat_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class BuyTicketHandler : public CommandHandler {
@@ -63,6 +64,7 @@ class BuyTicketHandler : public CommandHandler {
   BuyTicketHandler(TrainManager& train_manager, SeatManager& seat_manager,
                    UserManager& user_manager, OrderManager& order_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class QueryOrderHandler : public CommandHandler {
@@ -73,6 +75,7 @@ class QueryOrderHandler : public CommandHandler {
  public:
   QueryOrderHandler(OrderManager& order_manager, UserManager& user_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class RefundTicketHandler : public CommandHandler {
@@ -86,4 +89,5 @@ class RefundTicketHandler : public CommandHandler {
   RefundTicketHandler(OrderManager& order_manager, UserManager& user_manager,
                       TrainManager& train_manager, SeatManager& seat_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };

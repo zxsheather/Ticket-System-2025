@@ -78,3 +78,13 @@ void CommandSystem::parseAndExecute(const std::string& cmd_line,
   size_t idx = positions[cmd_name];
   handlers[idx]->execute(params, timestamp);
 }
+
+CommandResult CommandSystem::executeForWeb(const std::string& cmd_name, 
+                                          const ParamMap& params,
+                                          const std::string& timestamp) {
+  if (positions.find(cmd_name) == positions.end()) {
+    return CommandResult(false, "Command not found: " + cmd_name);
+  }
+  size_t idx = positions[cmd_name];
+  return handlers[idx]->executeForWeb(params, timestamp);
+}

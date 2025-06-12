@@ -11,6 +11,7 @@ class AddTrainHandler : public CommandHandler {
  public:
   AddTrainHandler(TrainManager& manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class DeleteTrainHandler : public CommandHandler {
@@ -20,6 +21,7 @@ class DeleteTrainHandler : public CommandHandler {
  public:
   DeleteTrainHandler(TrainManager& manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class ReleaseTrainHandler : public CommandHandler {
@@ -30,6 +32,7 @@ class ReleaseTrainHandler : public CommandHandler {
  public:
   ReleaseTrainHandler(TrainManager& manager, SeatManager& seat_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class QueryTrainHandler : public CommandHandler {
@@ -60,6 +63,7 @@ class QueryTrainHandler : public CommandHandler {
  public:
   QueryTrainHandler(TrainManager& train_manager, SeatManager& seat_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };
 
 class QueryTransferHandler : public CommandHandler {
@@ -70,4 +74,5 @@ class QueryTransferHandler : public CommandHandler {
  public:
   QueryTransferHandler(TrainManager& train_manager, SeatManager& seat_manager);
   void execute(const ParamMap& params, const std::string& timestamp) override;
+  CommandResult executeForWeb(const ParamMap& params, const std::string& timestamp) override;
 };

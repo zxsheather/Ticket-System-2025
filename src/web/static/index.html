@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>火车票订票系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .ticket-item {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border: 1px solid #dee2e6;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        
+        .ticket-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .train-id {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .ticket-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #666;
+        }
+        
+        .route-info {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .station {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .time {
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .seats-info {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .loading:before {
+            content: "🚄";
+            display: block;
+            font-size: 40px;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* 管理员界面样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .admin-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn.release {
+            background: #28a745;
+            color: white;
+        }
+        
+        .action-btn.delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .action-btn:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-released {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-draft {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .route-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .ticket-details {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">
+                🚄 火车票订票系统
+            </div>
+            <div class="user-info">
+                <div id="user-status">
+                    <button class="btn" onclick="showLoginModal()">登录</button>
+                    <button class="btn btn-secondary" onclick="showRegisterModal()">注册</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="tab-container">
+                <button class="tab active" onclick="showTab('search')">车票查询</button>
+                <button class="tab" onclick="showTab('transfer')">换乘查询</button>
+                <button class="tab" onclick="showTab('orders')" id="orders-tab" style="display:none;">我的订单</button>
+                <button class="tab" onclick="showTab('admin')" id="admin-tab" style="display:none;">管理员</button>
+            </div>
+            
+            <!-- 车票查询 -->
+            <div id="search-content" class="tab-content active">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>出发地</label>
+                        <input type="text" id="search-from" placeholder="请输入出发站">
+                    </div>
+                    <div class="form-group">
+                        <label>目的地</label>
+                        <input type="text" id="search-to" placeholder="请输入到达站">
+                    </div>
+                    <div class="form-group">
+                        <label>出发日期</label>
+                        <input type="date" id="search-date">
+                    </div>
+                    <div class="form-group">
+                        <label>排序方式</label>
+                        <select id="search-sort">
+                            <option value="time">按时间排序</option>
+                            <option value="cost">按价格排序</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="searchTickets()">🔍 查询车票</button>
+                
+                <div id="search-results" class="results"></div>
+            </div>
+            
+            <!-- 换乘查询 -->
+            <div id="transfer-content" class="tab-content">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>出发地</label>
+                        <input type="text" id="transfer-from" placeholder="请输入出发站">
+                    </div>
+                    <div class="form-group">
+                        <label>目的地</label>
+                        <input type="text" id="transfer-to" placeholder="请输入到达站">
+                    </div>
+                    <div class="form-group">
+                        <label>出发日期</label>
+                        <input type="date" id="transfer-date">
+                    </div>
+                    <div class="form-group">
+                        <label>排序方式</label>
+                        <select id="transfer-sort">
+                            <option value="time">按时间排序</option>
+                            <option value="cost">按价格排序</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="searchTransfer()">🔄 查询换乘</button>
+                
+                <div id="transfer-results" class="results"></div>
+            </div>
+            
+            <!-- 我的订单 -->
+            <div id="orders-content" class="tab-content">
+                <button class="btn" onclick="loadOrders()">🔄 刷新订单</button>
+                <div id="orders-results" class="results"></div>
+            </div>
+            
+            <!-- 管理员 -->
+            <div id="admin-content" class="tab-content">
+                <h3>🚂 车次管理</h3>
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button class="btn" onclick="showAddTrainModal()">➕ 添加车次</button>
+                    <button class="btn btn-danger" onclick="showDeleteTrainModal()">🗑️ 删除车次</button>
+                    <button class="btn btn-primary" onclick="showReleaseTrainModal()">🚀 发布车次</button>
+                    <button class="btn btn-secondary" onclick="loadAllTrains()">📋 查看所有车次</button>
+                    <button class="btn btn-info" onclick="loadSystemStats()">📊 系统统计</button>
+                </div>
+                
+                <!-- 车次列表 -->
+                <div id="train-list" style="margin-bottom: 20px;">
+                    <h4>车次列表</h4>
+                    <div class="search-container" style="margin-bottom: 15px;">
+                        <input type="text" id="train-search" placeholder="搜索车次号..." style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-right: 10px;">
+                        <button class="btn btn-small" onclick="searchTrains()">🔍 搜索</button>
+                        <button class="btn btn-small btn-secondary" onclick="loadAllTrains()">🔄 刷新</button>
+                    </div>
+                    <div id="trains-table" class="admin-table"></div>
+                </div>
+                
+                <!-- 系统统计 -->
+                <div id="system-stats" style="margin-bottom: 20px;">
+                    <h4>系统统计</h4>
+                    <div id="stats-content" class="stats-grid"></div>
+                </div>
+                
+                <div id="admin-results" class="results"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 登录模态框 -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('login-modal')">&times;</span>
+            <h2>🔐 用户登录</h2>
+            <div id="login-alert"></div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="login-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="login-password" placeholder="请输入密码">
+            </div>
+            <button class="btn" onclick="login()">登录</button>
+        </div>
+    </div>
+    
+    <!-- 注册模态框 -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('register-modal')">&times;</span>
+            <h2>📝 用户注册</h2>
+            <div id="register-alert"></div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="register-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="register-password" placeholder="请输入密码">
+            </div>
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="register-name" placeholder="请输入真实姓名">
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="register-email" placeholder="请输入邮箱地址">
+            </div>
+            <button class="btn" onclick="register()">注册</button>
+        </div>
+    </div>
+    
+    <!-- 购票模态框 -->
+    <div id="buy-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('buy-modal')">&times;</span>
+            <h2>🎫 购买车票</h2>
+            <div id="buy-alert"></div>
+            <div id="buy-ticket-info"></div>
+            <div class="form-group">
+                <label>购票数量</label>
+                <input type="number" id="buy-quantity" min="1" max="10" value="1">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="buy-queue"> 
+                    加入候补队列（当座位不足时）
+                </label>
+            </div>
+            <button class="btn" onclick="confirmBuy()">确认购买</button>
+        </div>
+    </div>
+    
+    <!-- 添加列车模态框 -->
+    <div id="add-train-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('add-train-modal')">&times;</span>
+            <h2>🚄 添加列车</h2>
+            <form id="add-train-form">
+                <div class="form-group">
+                    <label>车次号：</label>
+                    <input type="text" name="train_id" placeholder="例：G1001" required>
+                </div>
+                <div class="form-group">
+                    <label>站点（用逗号分隔）：</label>
+                    <input type="text" name="stations" placeholder="例：北京,天津,济南,上海" required>
+                </div>
+                <div class="form-group">
+                    <label>票价（用逗号分隔，按站点间距离）：</label>
+                    <input type="text" name="prices" placeholder="例：100,150,200" required>
+                </div>
+                <div class="form-group">
+                    <label>行程时间（分钟，用逗号分隔）：</label>
+                    <input type="text" name="travel_times" placeholder="例：60,90,120" required>
+                </div>
+                <div class="form-group">
+                    <label>停车时间（分钟，用逗号分隔，可选）：</label>
+                    <input type="text" name="stopover_times" placeholder="例：5,10,15">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>发车日期：</label>
+                        <input type="date" name="release_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>开始售票日期：</label>
+                        <input type="date" name="sale_date" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>结束售票日期：</label>
+                        <input type="date" name="end_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>开始时间：</label>
+                        <input type="time" name="start_time" value="08:00" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>座位数：</label>
+                        <input type="number" name="seat_num" min="1" value="500" required>
+                    </div>
+                    <div class="form-group">
+                        <label>列车类型：</label>
+                        <select name="type">
+                            <option value="G">G - 高速动车</option>
+                            <option value="D">D - 动车</option>
+                            <option value="C">C - 城际</option>
+                            <option value="K">K - 快速</option>
+                            <option value="T">T - 特快</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="add-train-alert"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn" onclick="addTrain()">添加列车</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-train-modal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 删除列车模态框 -->
+    <div id="delete-train-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('delete-train-modal')">&times;</span>
+            <h2>🗑️ 删除列车</h2>
+            <div class="form-group">
+                <label>车次号：</label>
+                <input type="text" id="delete-train-id" placeholder="请输入要删除的车次号" required>
+            </div>
+            <div id="delete-train-alert"></div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-danger" onclick="deleteTrain()">删除列车</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('delete-train-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 发布列车模态框 -->
+    <div id="release-train-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('release-train-modal')">&times;</span>
+            <h2>🚀 发布列车</h2>
+            <div class="form-group">
+                <label>车次号：</label>
+                <input type="text" id="release-train-id" placeholder="请输入要发布的车次号" required>
+            </div>
+            <div id="release-train-alert"></div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-primary" onclick="releaseTrain()">发布列车</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('release-train-modal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let currentUser = null;
+        let sessionToken = null;
+        let currentBuyTicket = null;
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查本地存储中的登录信息
+            const savedToken = localStorage.getItem('sessionToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                sessionToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                updateUserInterface();
+            }
+            
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('search-date').value = today;
+            document.getElementById('transfer-date').value = today;
+        });
+        
+        // 标签页切换
+        function showTab(tabName) {
+            // 隐藏所有标签内容
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // 移除所有标签的active类
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName + '-content').classList.add('active');
+            
+            // 添加active类到对应的标签
+            event.target.classList.add('active');
+            
+            // 如果切换到管理员标签页，自动加载数据
+            if (tabName === 'admin' && currentUser && currentUser.privilege >= 5) {
+                setTimeout(() => {
+                    loadAllTrains();
+                    loadSystemStats();
+                }, 100);
+            }
+        }
+        
+        // 显示模态框
+        function showLoginModal() {
+            document.getElementById('login-modal').style.display = 'block';
+        }
+        
+        function showRegisterModal() {
+            document.getElementById('register-modal').style.display = 'block';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // 显示提示信息
+        function showAlert(container, message, type) {
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+        
+        // 用户登录
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const alertDiv = document.getElementById('login-alert');
+            
+            if (!username || !password) {
+                showAlert(alertDiv, '请输入用户名和密码', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionToken = data.session_token;
+                    currentUser = {
+                        username: data.username,
+                        privilege: data.privilege
+                    };
+                    
+                    // 调试信息
+                    console.log('Login successful:', currentUser);
+                    console.log('User privilege:', currentUser.privilege);
+                    
+                    // 保存到本地存储
+                    localStorage.setItem('sessionToken', sessionToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    updateUserInterface();
+                    closeModal('login-modal');
+                    showAlert(alertDiv, '登录成功！', 'success');
+                } else {
+                    showAlert(alertDiv, data.error || '登录失败', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, '网络错误，请重试', 'error');
+            }
+        }
+        
+        // 用户注册
+        async function register() {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const name = document.getElementById('register-name').value;
+            const mail_addr = document.getElementById('register-email').value;
+            const alertDiv = document.getElementById('register-alert');
+            
+            if (!username || !password || !name || !mail_addr) {
+                showAlert(alertDiv, '请填写所有字段', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password, name, mail_addr })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(alertDiv, '注册成功！请登录', 'success');
+                    setTimeout(() => {
+                        closeModal('register-modal');
+                        showLoginModal();
+                    }, 1500);
+                } else {
+                    showAlert(alertDiv, data.error || '注册失败', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, '网络错误，请重试', 'error');
+            }
+        }
+        
+        // 用户登出
+        async function logout() {
+            try {
+                await fetch('/api/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            // 清除本地状态
+            sessionToken = null;
+            currentUser = null;
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('currentUser');
+            
+            updateUserInterface();
+        }
+        
+        // 更新用户界面
+        function updateUserInterface() {
+            const userStatus = document.getElementById('user-status');
+            const ordersTab = document.getElementById('orders-tab');
+            const adminTab = document.getElementById('admin-tab');
+            
+            console.log('Updating user interface, currentUser:', currentUser);
+            
+            if (currentUser) {
+                userStatus.innerHTML = `
+                    <span>👋 欢迎，${currentUser.username} (权限: ${currentUser.privilege})</span>
+                    <button class="btn btn-secondary" onclick="logout()">登出</button>
+                `;
+                ordersTab.style.display = 'block';
+                
+                console.log('Checking admin privilege:', currentUser.privilege, 'is >= 5?', currentUser.privilege >= 5);
+                
+                if (currentUser.privilege >= 5) {
+                    adminTab.style.display = 'block';
+                    console.log('Admin tab shown');
+                } else {
+                    adminTab.style.display = 'none';
+                    console.log('Admin tab hidden');
+                }
+            } else {
+                userStatus.innerHTML = `
+                    <button class="btn" onclick="showLoginModal()">登录</button>
+                    <button class="btn btn-secondary" onclick="showRegisterModal()">注册</button>
+                `;
+                ordersTab.style.display = 'none';
+                adminTab.style.display = 'none';
+            }
+        }
+        
+        // 查询车票
+        async function searchTickets() {
+            const from = document.getElementById('search-from').value;
+            const to = document.getElementById('search-to').value;
+            const date = document.getElementById('search-date').value;
+            const sort = document.getElementById('search-sort').value;
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (!from || !to || !date) {
+                alert('请填写所有查询字段');
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">正在查询车票...</div>';
+            
+            try {
+                // 将日期格式从YYYY-MM-DD转换为MM-DD
+                const dateObj = new Date(date);
+                const formattedDate = String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    String(dateObj.getDate()).padStart(2, '0');
+                
+                const response = await fetch(`/api/tickets/search?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${formattedDate}&sort=${sort}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySearchResults(data.tickets, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="alert alert-error">查询失败，请重试，${error}</div>`;
+            }
+        }
+        
+        // 显示查询结果
+        function displaySearchResults(tickets, container) {
+            if (tickets.length === 0) {
+                container.innerHTML = '<div class="alert alert-error">未找到符合条件的车票</div>';
+                return;
+            }
+            
+            let html = '';
+            tickets.forEach(ticket => {
+                html += `
+                    <div class="ticket-item">
+                        <div class="ticket-header">
+                            <div class="train-id">${ticket.train_id}</div>
+                            <div class="price">￥${ticket.price}</div>
+                        </div>
+                        <div class="ticket-details">
+                            <div class="route-info">
+                                <div>
+                                    <div class="station">${ticket.from}</div>
+                                    <div class="time">${ticket.start_time}</div>
+                                </div>
+                                <div style="margin: 0 20px; font-size: 24px;">🚄</div>
+                                <div>
+                                    <div class="station">${ticket.to}</div>
+                                    <div class="time">${ticket.end_time}</div>
+                                </div>
+                                <div style="margin-left: 20px;">
+                                    <div>历时 ${Math.floor(ticket.travel_time / 60)}h${ticket.travel_time % 60}m</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="seats-info">余票：${ticket.seats}</div>
+                                ${currentUser ? `<button class="btn" onclick="buyTicket('${ticket.train_id}', '${ticket.from}', '${ticket.to}', '${ticket.start_time}', '${ticket.end_time}', ${ticket.price}, ${ticket.seats})" ${ticket.seats === 0 ? 'disabled' : ''}>购买</button>` : '<button class="btn" onclick="showLoginModal()">登录购买</button>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 查询换乘
+        async function searchTransfer() {
+            const from = document.getElementById('transfer-from').value;
+            const to = document.getElementById('transfer-to').value;
+            const date = document.getElementById('transfer-date').value;
+            const sort = document.getElementById('transfer-sort').value;
+            const resultsDiv = document.getElementById('transfer-results');
+            
+            if (!from || !to || !date) {
+                alert('请填写所有查询字段');
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">正在查询换乘方案...</div>';
+            
+            try {
+                const dateObj = new Date(date);
+                const formattedDate = String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    String(dateObj.getDate()).padStart(2, '0');
+                
+                const response = await fetch(`/api/tickets/transfer?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&date=${formattedDate}&sort=${sort}`);
+                const data = await response.json();
+                
+                if (data.success && data.transfer) {
+                    displayTransferResults(data.transfer, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = '<div class="alert alert-error">未找到换乘方案</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="alert alert-error">查询失败，请重试</div>';
+            }
+        }
+        
+        // 显示换乘结果
+        function displayTransferResults(transfer, container) {
+            const html = `
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <div class="train-id">🔄 换乘方案</div>
+                        <div class="price">总价：￥${transfer.total_price}</div>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <div style="margin-bottom: 10px;"><strong>第一段：</strong></div>
+                        <div class="ticket-details">
+                            <div class="route-info">
+                                <div class="train-id">${transfer.first_ticket.train_id}</div>
+                                <div>
+                                    <div class="station">${transfer.first_ticket.from}</div>
+                                    <div class="time">${transfer.first_ticket.start_time}</div>
+                                </div>
+                                <div style="margin: 0 20px;">🚄</div>
+                                <div>
+                                    <div class="station">${transfer.first_ticket.to}</div>
+                                    <div class="time">${transfer.first_ticket.end_time}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="price">￥${transfer.first_ticket.price}</div>
+                                <div class="seats-info">余票：${transfer.first_ticket.seats}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <div style="margin-bottom: 10px;"><strong>第二段：</strong></div>
+                        <div class="ticket-details">
+                            <div class="route-info">
+                                <div class="train-id">${transfer.second_ticket.train_id}</div>
+                                <div>
+                                    <div class="station">${transfer.second_ticket.from}</div>
+                                    <div class="time">${transfer.second_ticket.start_time}</div>
+                                </div>
+                                <div style="margin: 0 20px;">🚄</div>
+                                <div>
+                                    <div class="station">${transfer.second_ticket.to}</div>
+                                    <div class="time">${transfer.second_ticket.end_time}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="price">￥${transfer.second_ticket.price}</div>
+                                <div class="seats-info">余票：${transfer.second_ticket.seats}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        ${currentUser ? '<button class="btn">🎫 购买换乘票</button>' : '<button class="btn" onclick="showLoginModal()">登录购买</button>'}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // 购买车票
+        function buyTicket(trainId, from, to, startTime, endTime, price, seats) {
+            currentBuyTicket = {
+                train_id: trainId,
+                from: from,
+                to: to,
+                start_time: startTime,
+                end_time: endTime,
+                price: price,
+                seats: seats
+            };
+            
+            document.getElementById('buy-ticket-info').innerHTML = `
+                <div style="background: linear-gradient(135deg, #f8f9fa, #ffffff); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #e9ecef;">
+                    <div><strong>🚄 车次：</strong>${trainId}</div>
+                    <div><strong>📍 路线：</strong>${from} → ${to}</div>
+                    <div><strong>⏰ 时间：</strong>${startTime} - ${endTime}</div>
+                    <div><strong>💰 单价：</strong>￥${price}</div>
+                    <div><strong>🎫 余票：</strong>${seats}</div>
+                </div>
+            `;
+            
+            document.getElementById('buy-modal').style.display = 'block';
+        }
+        
+        // 确认购买
+        async function confirmBuy() {
+            const quantity = parseInt(document.getElementById('buy-quantity').value);
+            const queue = document.getElementById('buy-queue').checked;
+            const alertDiv = document.getElementById('buy-alert');
+            
+            if (!currentBuyTicket || !quantity || quantity < 1) {
+                showAlert(alertDiv, '请输入有效的购票数量', 'error');
+                return;
+            }
+            
+            try {
+                // 将日期格式从YYYY-MM-DD转换为MM-DD
+                const searchDate = document.getElementById('search-date').value;
+                const dateObj = new Date(searchDate);
+                const formattedDate = String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    String(dateObj.getDate()).padStart(2, '0');
+                
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Token': sessionToken
+                    },
+                    body: JSON.stringify({
+                        train_id: currentBuyTicket.train_id,
+                        from: currentBuyTicket.from,
+                        to: currentBuyTicket.to,
+                        date: formattedDate,
+                        quantity: quantity,
+                        queue: queue
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(alertDiv, `购票成功！订单号：${data.order_id}`, 'success');
+                    setTimeout(() => {
+                        closeModal('buy-modal');
+                        // 刷新搜索结果
+                        searchTickets();
+                    }, 2000);
+                } else {
+                    showAlert(alertDiv, data.error || '购票失败', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, '网络错误，请重试', 'error');
+            }
+        }
+        
+        // 加载订单
+        async function loadOrders() {
+            if (!currentUser) {
+                showLoginModal();
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('orders-results');
+            resultsDiv.innerHTML = '<div class="loading">正在加载订单...</div>';
+            
+            try {
+                const response = await fetch('/api/orders', {
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayOrders(data.orders, resultsDiv);
+                } else {
+                    resultsDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="alert alert-error">加载订单失败，请重试</div>';
+            }
+        }
+        
+        // 显示订单
+        function displayOrders(orders, container) {
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="alert alert-error">暂无订单</div>';
+                return;
+            }
+            
+            let html = '';
+            orders.forEach(order => {
+                const statusIcon = order.status === 'success' ? '✅' : 
+                                  order.status === 'pending' ? '⏳' : '❌';
+                const statusText = order.status === 'success' ? '已出票' : 
+                                  order.status === 'pending' ? '候补中' : '已退票';
+                
+                html += `
+                    <div class="ticket-item">
+                        <div class="ticket-header">
+                            <div class="train-id">${order.train_id}</div>
+                            <div class="price">${statusIcon} ${statusText}</div>
+                        </div>
+                        <div class="ticket-details">
+                            <div class="route-info">
+                                <div>
+                                    <div class="station">${order.from}</div>
+                                    <div class="time">${order.start_time}</div>
+                                </div>
+                                <div style="margin: 0 20px;">🚄</div>
+                                <div>
+                                    <div class="station">${order.to}</div>
+                                    <div class="time">${order.end_time}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="price">￥${order.price}</div>
+                                <div class="seats-info">数量：${order.quantity}</div>
+                                ${order.status === 'success' ? `<button class="btn btn-danger" onclick="refundTicket('${order.order_id}')">退票</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 退票
+        async function refundTicket(orderId) {
+            if (!confirm('确定要退票吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/orders/${orderId}/refund`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('退票成功！');
+                    loadOrders(); // 重新加载订单
+                } else {
+                    alert(data.error || '退票失败');
+                }
+            } catch (error) {
+                alert('网络错误，请重试');
+            }
+        }
+        
+        // 管理员功能 - 显示添加列车模态框
+        function showAddTrainModal() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            document.getElementById('add-train-modal').style.display = 'block';
+        }
+        
+        // 管理员功能 - 添加列车
+        async function addTrain() {
+            const form = document.getElementById('add-train-form');
+            const formData = new FormData(form);
+            const alertDiv = document.getElementById('add-train-alert');
+            
+            // 解析站点信息 (格式: 站点1,站点2,站点3...)
+            const stationsStr = formData.get('stations');
+            const pricesStr = formData.get('prices');
+            const travelTimesStr = formData.get('travel_times');
+            const stopoverTimesStr = formData.get('stopover_times');
+            const saleDateStr = formData.get('sale_date');
+            const endDateStr = formData.get('end_date'); // 结束日期字段
+            const startTimeStr = formData.get('start_time'); // 开始时间字段
+            
+            if (!stationsStr || !pricesStr || !travelTimesStr || !saleDateStr || !endDateStr) {
+                showAlert(alertDiv, '请填写完整的车次信息', 'error');
+                return;
+            }
+            
+            // 解析并验证数据
+            const stations = stationsStr.split(',').map(s => s.trim());
+            const prices = pricesStr.split(',').map(p => parseInt(p.trim()));
+            const travelTimes = travelTimesStr.split(',').map(t => parseInt(t.trim()));
+            const stopoverTimes = stopoverTimesStr ? stopoverTimesStr.split(',').map(t => parseInt(t.trim())) : [];
+            
+            if (stations.length < 2) {
+                showAlert(alertDiv, '至少需要2个站点', 'error');
+                return;
+            }
+            
+            // 验证数据长度匹配
+            if (prices.length !== stations.length - 1 || travelTimes.length !== stations.length - 1) {
+                showAlert(alertDiv, '价格和行驶时间的数量应该比站点数量少1', 'error');
+                return;
+            }
+            
+            // 如果只有两个站点，停车时间用下划线表示
+            if (stations.length === 2 && stopoverTimes.length === 0) {
+                // 对于只有两个站点的情况，后端期望 stopover_times 为 "_"
+            } else if (stopoverTimes.length !== stations.length - 2) {
+                showAlert(alertDiv, '停车时间的数量应该比站点数量少2', 'error');
+                return;
+            }
+            
+            // 将日期格式从 YYYY-MM-DD 转换为 MM-DD
+            const formatDateToMmDd = (dateStr) => {
+                const date = new Date(dateStr);
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${month}-${day}`;
+            };
+            
+            // 构建符合后端命令格式的列车数据
+            // 根据 acquirement.md，数据格式需要用 | 分隔
+            const trainData = {
+                train_id: formData.get('train_id'),
+                stations: stations.join('|'),  // 用|分隔站点
+                prices: prices.join('|'),      // 用|分隔价格
+                travel_times: travelTimes.join('|'),  // 用|分隔行驶时间
+                stopover_times: stations.length === 2 ? '_' : stopoverTimes.join('|'), // 两站用_，否则用|分隔
+                release_date: formData.get('release_date'),
+                seat_num: parseInt(formData.get('seat_num')),
+                sale_date: `${formatDateToMmDd(saleDateStr)}|${formatDateToMmDd(endDateStr)}`, // 开始日期|结束日期，格式: MM-DD|MM-DD
+                start_time: startTimeStr || '08:00', // 添加开始时间
+                type: formData.get('type') || 'G'
+            };
+            
+            // 验证站点数量
+            if (stations.length < 2) {
+                showAlert(alertDiv, '至少需要2个站点', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/trains', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Token': sessionToken
+                    },
+                    body: JSON.stringify(trainData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(alertDiv, '添加车次成功！', 'success');
+                    form.reset();
+                    setTimeout(() => {
+                        closeModal('add-train-modal');
+                        loadAllTrains(); // 刷新车次列表
+                    }, 2000);
+                } else {
+                    showAlert(alertDiv, data.error || '添加车次失败', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, '网络错误，请重试', 'error');
+            }
+        }
+        
+        // 管理员功能 - 显示删除列车模态框
+        function showDeleteTrainModal() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            document.getElementById('delete-train-modal').style.display = 'block';
+        }
+        
+        // 管理员功能 - 删除列车
+        async function deleteTrain() {
+            const trainId = document.getElementById('delete-train-id').value;
+            const alertDiv = document.getElementById('delete-train-alert');
+            
+            if (!trainId) {
+                showAlert(alertDiv, '请输入车次号', 'error');
+                return;
+            }
+            
+            if (!confirm(`确定要删除车次 ${trainId} 吗？此操作不可恢复！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/trains/${trainId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(alertDiv, '删除车次成功！', 'success');
+                    document.getElementById('delete-train-id').value = '';
+                    setTimeout(() => {
+                        closeModal('delete-train-modal');
+                        loadAllTrains(); // 刷新车次列表
+                    }, 2000);
+                } else {
+                    showAlert(alertDiv, data.error || '删除车次失败', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, '网络错误，请重试', 'error');
+            }
+        }
+        
+        // 管理员功能 - 显示发布车次模态框
+        function showReleaseTrainModal() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            document.getElementById('release-train-modal').style.display = 'block';
+        }
+        
+        // 管理员功能 - 发布车次
+        async function releaseTrain() {
+            const trainId = document.getElementById('release-train-id').value;
+            const alertDiv = document.getElementById('release-train-alert');
+            
+            if (!trainId) {
+                showAlert(alertDiv, '请输入车次号', 'error');
+                return;
+            }
+            
+            if (!confirm(`确定要发布车次 ${trainId} 吗？发布后车票将开始销售！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/trains/${trainId}/release`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(alertDiv, '发布车次成功！', 'success');
+                    document.getElementById('release-train-id').value = '';
+                    setTimeout(() => {
+                        closeModal('release-train-modal');
+                        loadAllTrains(); // 刷新车次列表
+                    }, 2000);
+                } else {
+                    showAlert(alertDiv, data.error || '发布车次失败', 'error');
+                }
+            } catch (error) {
+                showAlert(alertDiv, '网络错误，请重试', 'error');
+            }
+        }
+        
+        // 管理员功能 - 加载所有车次
+        async function loadAllTrains() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            
+            const tableDiv = document.getElementById('trains-table');
+            tableDiv.innerHTML = '<div class="loading">正在加载车次信息...</div>';
+            
+            try {
+                const response = await fetch('/api/admin/trains', {
+                    method: 'GET',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayTrainsTable(data.trains, tableDiv);
+                } else {
+                    tableDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                }
+            } catch (error) {
+                tableDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
+            }
+        }
+        
+        // 管理员功能 - 搜索车次
+        async function searchTrains() {
+            const searchTerm = document.getElementById('train-search').value.trim();
+            const tableDiv = document.getElementById('trains-table');
+            
+            if (!searchTerm) {
+                loadAllTrains();
+                return;
+            }
+            
+            tableDiv.innerHTML = '<div class="loading">正在搜索车次...</div>';
+            
+            try {
+                const response = await fetch(`/api/admin/trains/search?q=${encodeURIComponent(searchTerm)}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayTrainsTable(data.trains, tableDiv);
+                } else {
+                    tableDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                }
+            } catch (error) {
+                tableDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
+            }
+        }
+        
+        // 管理员功能 - 显示车次表格
+        function displayTrainsTable(trains, container) {
+            if (!trains || trains.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">暂无车次信息</div>';
+                return;
+            }
+            
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>车次号</th>
+                            <th>类型</th>
+                            <th>起点-终点</th>
+                            <th>站点数</th>
+                            <th>座位数</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            trains.forEach(train => {
+                const startStation = train.stations && train.stations.length > 0 ? train.stations[0] : '未知';
+                const endStation = train.stations && train.stations.length > 0 ? train.stations[train.stations.length - 1] : '未知';
+                const statusClass = train.is_released ? 'status-released' : 'status-draft';
+                const statusText = train.is_released ? '已发布' : '草稿';
+                
+                html += `
+                    <tr>
+                        <td><strong>${train.train_id}</strong></td>
+                        <td><span class="status-badge">${train.type}</span></td>
+                        <td>${startStation} → ${endStation}</td>
+                        <td>${train.station_num || 0}</td>
+                        <td>${train.seat_num || 0}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <div class="action-buttons">
+                                ${!train.is_released ? 
+                                    `<button class="action-btn release" onclick="releaseTrainById('${train.train_id}')">发布</button>` : 
+                                    '<span class="status-badge status-released">已发布</span>'
+                                }
+                                <button class="action-btn delete" onclick="deleteTrainById('${train.train_id}')">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // 管理员功能 - 从表格直接发布车次
+        async function releaseTrainById(trainId) {
+            if (!confirm(`确定要发布车次 ${trainId} 吗？发布后车票将开始销售！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/trains/${trainId}/release`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('发布车次成功！');
+                    loadAllTrains(); // 刷新表格
+                } else {
+                    alert(data.error || '发布车次失败');
+                }
+            } catch (error) {
+                alert('网络错误，请重试');
+            }
+        }
+        
+        // 管理员功能 - 从表格直接删除车次
+        async function deleteTrainById(trainId) {
+            if (!confirm(`确定要删除车次 ${trainId} 吗？此操作不可恢复！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/trains/${trainId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('删除车次成功！');
+                    loadAllTrains(); // 刷新表格
+                } else {
+                    alert(data.error || '删除车次失败');
+                }
+            } catch (error) {
+                alert('网络错误，请重试');
+            }
+        }
+        
+        // 管理员功能 - 加载系统统计
+        async function loadSystemStats() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            
+            const statsDiv = document.getElementById('stats-content');
+            statsDiv.innerHTML = '<div class="loading">正在加载统计信息...</div>';
+            
+            try {
+                const response = await fetch('/api/admin/stats', {
+                    method: 'GET',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySystemStats(data.stats, statsDiv);
+                } else {
+                    statsDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                }
+            } catch (error) {
+                statsDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
+            }
+        }
+        
+        // 管理员功能 - 显示系统统计
+        function displaySystemStats(stats, container) {
+            const html = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total_users || 0}</div>
+                    <div class="stat-label">总用户数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total_trains || 0}</div>
+                    <div class="stat-label">总车次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.released_trains || 0}</div>
+                    <div class="stat-label">已发布车次</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total_orders || 0}</div>
+                    <div class="stat-label">总订单数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.pending_orders || 0}</div>
+                    <div class="stat-label">待处理订单</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total_revenue || 0}</div>
+                    <div class="stat-label">总收入 (元)</div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
