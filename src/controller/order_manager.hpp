@@ -22,4 +22,6 @@ class OrderManager {
   sjtu::vector<Order> queryOrder(const std::string& username);
   sjtu::vector<Order> queryPendingOrder(const FixedString<20>& train_id,
                                         const Date& date);
+  int queryOrderCount() const;
+  int queryPendingCount() const;
 };

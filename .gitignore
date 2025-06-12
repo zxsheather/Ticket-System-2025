@@ -8,6 +8,8 @@ test_*
 run-test*
 *.test
 
+crow/
+
 # Cache directories
 .cache/
 .ccache/
@@ -166,4 +168,6 @@ cachegrind.out.*
 # Generated files
 generate-*
 auto-generated-*
+
+demo.*
 

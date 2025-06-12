@@ -48,3 +48,11 @@ sjtu::vector<Order> OrderManager::queryPendingOrder(
   long long unitrain = Hash::hashKey(train_id, date);
   return pending_db.find(unitrain);
 }
+
+int OrderManager::queryOrderCount() const {
+  return order_db.size();
+}
+
+int OrderManager::queryPendingCount() const {
+  return pending_db.size();
+}

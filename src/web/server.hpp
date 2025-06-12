@@ -61,6 +61,7 @@ private:
     crow::response handleGetAllTrains(const crow::request& req);
     crow::response handleSearchTrains(const crow::request& req);
     crow::response handleGetSystemStats(const crow::request& req);
+    crow::response handleCleanDatabase(const crow::request& req);
 };
 
 #endif

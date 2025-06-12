@@ -125,6 +125,11 @@ void WebServer::setupRoutes() {
     ([this](const crow::request& req){
         return handleGetSystemStats(req);
     });
+    
+    CROW_ROUTE(app, "/api/admin/clean").methods(crow::HTTPMethod::Post)
+    ([this](const crow::request& req){
+        return handleCleanDatabase(req);
+    });
 }
 
 // 工具方法实现
@@ -984,22 +989,75 @@ crow::response WebServer::handleGetSystemStats(const crow::request& req) {
     }
     
     try {
-        // 由于没有专门的系统统计命令，这里返回占位符实现
-        // 在实际应用中，需要实现专门的统计命令或通过多个查询组合统计信息
+        // 使用DataNumQueryHandler获取系统统计信息
+        ParamMap params;
+        std::string timestamp = "WEB";
+        
+        CommandResult result = command_system.executeForWeb("data_num_query", params, timestamp);
+        
+        if (!result.success) {
+            return errorResponse("Failed to retrieve statistics: " + result.message, 500);
+        }
+        
+        // 解析统计数据
         crow::json::wvalue response_data;
         response_data["success"] = true;
-        response_data["stats"]["total_users"] = 0; // 需要通过用户查询获取
-        response_data["stats"]["total_trains"] = 0; // 需要通过车次查询获取
-        response_data["stats"]["released_trains"] = 0;
-        response_data["stats"]["total_orders"] = 0; // 需要通过订单查询获取
-        response_data["stats"]["pending_orders"] = 0;
-        response_data["stats"]["total_revenue"] = 0;
-        response_data["message"] = "System statistics feature not fully implemented yet";
+        
+        // result.data 应该是 JSON 格式: {"train_count":x,"user_count":y,"order_count":z}
+        try {
+            auto stats_json = crow::json::load(result.data);
+            response_data["stats"]["total_trains"] = stats_json["train_count"].i();
+            response_data["stats"]["total_users"] = stats_json["user_count"].i();
+            response_data["stats"]["total_orders"] = stats_json["order_count"].i();
+            response_data["stats"]["released_trains"] = stats_json["train_count"].i(); // 假设所有火车都已发布
+            response_data["stats"]["pending_orders"] = 0; // 可以后续扩展
+            response_data["stats"]["total_revenue"] = 0; // 可以后续扩展
+            response_data["message"] = "Statistics retrieved successfully";
+        } catch (const std::exception& parse_error) {
+            // 如果JSON解析失败，尝试简单解析
+            response_data["stats"]["raw_data"] = result.data;
+            response_data["message"] = "Statistics retrieved (raw format)";
+        }
         
         return jsonResponse(response_data);
         
     } catch (const std::exception& e) {
         return errorResponse("Failed to get stats", 500);
+    }
+}
+
+// 管理员功能 - 清理数据库 - 使用 Command Handler
+crow::response WebServer::handleCleanDatabase(const crow::request& req) {
+    std::string username;
+    if (!isAuthenticated(req, username)) {
+        return errorResponse("Authentication required", 401);
+    }
+    
+    // 检查管理员权限
+    if (!hasAdminPrivilege(username)) {
+        return errorResponse("Admin privilege required", 403);
+    }
+    
+    try {
+        // 使用CleanHandler清理数据库
+        ParamMap params;
+        std::string timestamp = "WEB";
+        
+        CommandResult result = command_system.executeForWeb("clean", params, timestamp);
+        
+        if (result.success) {
+            crow::json::wvalue response_data;
+            response_data["success"] = true;
+            response_data["message"] = result.message;
+            response_data["data"] = result.data;
+            
+            return jsonResponse(response_data);
+        } else {
+            return errorResponse("Failed to clean database: " + result.message, 500);
+        }
+        
+    } catch (const std::exception& e) {
+        return errorResponse("Failed to clean database", 500);
     }
 }
 

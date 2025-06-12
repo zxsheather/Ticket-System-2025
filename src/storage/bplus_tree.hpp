@@ -101,15 +101,18 @@ class BPT {
       block_file_.initialise();
       root_ = -1;
       height_ = 0;
+      data_num_ = 0;
     } else {
       index_file_.get_info(root_, 1);
       index_file_.get_info(height_, 2);
+      block_file_.get_info(data_num_, 2);
     }
   }
   ~BPT() {
     // cache_manager_.flush_cache();
     index_file_.write_info(root_, 1);
     index_file_.write_info(height_, 2);
+    block_file_.write_info(data_num_, 2);
   }
   void insert(const Key& key, const Value& value);
   void remove(const Key& key, const Value& value);
@@ -124,12 +127,17 @@ class BPT {
   // special interface for key-multiple-values, but value's ordering consistent
   void update(const Key& key, const Value& new_value, const Value& old_value);
 
+  int size() const {
+    return data_num_;
+  }
+
  private:
   std::string filename_;
   MemoryRiver<Index<Key, Value>, 2> index_file_;
   MemoryRiver<Block<Key, Value>, 2> block_file_;
   int root_;
   int height_;
+  int data_num_;
   // sjtu::BPTCacheManager<Key, Value> cache_manager_;
 
   // search for target leafnode and record the search path
@@ -166,4 +174,5 @@ class BPT {
   // adjust parent index after index merging
   void balanceInternalNode(Index<Key, Value>& node, int node_addr,
                            sjtu::vector<pathFrame<Key, Value>>& path);
+
 };

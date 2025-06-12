@@ -41,4 +41,8 @@ class UserManager {
     }
     return iter->second;
   }
+
+  int queryUserCount() const {
+    return user_db.size();
+  }
 };

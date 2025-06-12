@@ -68,3 +68,7 @@ sjtu::vector<FixedString<20>> TrainManager::queryStation(
 sjtu::vector<FixedString<20>> TrainManager::queryRoute(const Route& route) {
   return route_db.find(route);
 }
+
+int TrainManager::queryTrainCount() const {
+  return train_db.size();
+}

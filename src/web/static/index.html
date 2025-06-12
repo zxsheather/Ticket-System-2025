@@ -151,6 +151,11 @@
             box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
         }
         
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        
         .results {
             margin-top: 30px;
         }
@@ -564,6 +569,7 @@
                     <button class="btn btn-primary" onclick="showReleaseTrainModal()">🚀 发布车次</button>
                     <button class="btn btn-secondary" onclick="loadAllTrains()">📋 查看所有车次</button>
                     <button class="btn btn-info" onclick="loadSystemStats()">📊 系统统计</button>
+                    <button class="btn btn-warning" onclick="cleanDatabase()">🧹 清理数据库</button>
                 </div>
                 
                 <!-- 车次列表 -->
@@ -1378,7 +1384,7 @@
             };
             
             // 构建符合后端命令格式的列车数据
-            // 根据 acquirement.md，数据格式需要用 | 分隔
+            // 根据 acquirement.md，数据格式需要用|分隔
             const trainData = {
                 train_id: formData.get('train_id'),
                 stations: stations.join('|'),  // 用|分隔站点
@@ -1521,50 +1527,60 @@
             }
         }
         
-        // 管理员功能 - 加载所有车次
-        async function loadAllTrains() {
+        // 管理员功能 - 清理数据库
+        async function cleanDatabase() {
             if (!currentUser || currentUser.privilege < 5) {
                 alert('权限不足！需要管理员权限。');
                 return;
             }
             
-            const tableDiv = document.getElementById('trains-table');
-            tableDiv.innerHTML = '<div class="loading">正在加载车次信息...</div>';
-            
-            try {
-                const response = await fetch('/api/admin/trains', {
-                    method: 'GET',
-                    headers: {
-                        'X-Session-Token': sessionToken
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    displayTrainsTable(data.trains, tableDiv);
-                } else {
-                    tableDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
-                }
-            } catch (error) {
-                tableDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
-            }
-        }
-        
-        // 管理员功能 - 搜索车次
-        async function searchTrains() {
-            const searchTerm = document.getElementById('train-search').value.trim();
-            const tableDiv = document.getElementById('trains-table');
-            
-            if (!searchTerm) {
-                loadAllTrains();
+            // 确认操作
+            if (!confirm('⚠️ 警告：这将清除所有数据库文件！\n\n此操作包括：\n- 所有用户数据\n- 所有车次信息\n- 所有订单记录\n- 所有座位信息\n\n确定要继续吗？')) {
                 return;
             }
             
-            tableDiv.innerHTML = '<div class="loading">正在搜索车次...</div>';
+            try {
+                const response = await fetch('/api/admin/clean', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ 数据库清理成功！\n\n系统已重置，所有数据已清除。');
+                    
+                    // 清理成功后，刷新统计信息
+                    await loadSystemStats();
+                    
+                    // 清空当前页面的数据显示
+                    document.getElementById('trains-table').innerHTML = '<div class="alert alert-info">数据已清除</div>';
+                    document.getElementById('admin-results').innerHTML = '';
+                    
+                } else {
+                    alert('❌ 清理失败：' + (data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('❌ 网络错误：无法连接到服务器');
+                console.error('Clean database error:', error);
+            }
+        }
+        
+        // 管理员功能 - 显示系统统计
+        async function loadSystemStats() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            
+            const statsDiv = document.getElementById('stats-content');
+            statsDiv.innerHTML = '<div class="loading">正在加载统计信息...</div>';
             
             try {
-                const response = await fetch(`/api/admin/trains/search?q=${encodeURIComponent(searchTerm)}`, {
+                const response = await fetch('/api/admin/stats', {
                     method: 'GET',
                     headers: {
                         'X-Session-Token': sessionToken
@@ -1574,12 +1590,12 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    displayTrainsTable(data.trains, tableDiv);
+                    displaySystemStats(data.stats, statsDiv);
                 } else {
-                    tableDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+                    statsDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
                 }
             } catch (error) {
-                tableDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
+                statsDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
             }
         }
         
@@ -1722,6 +1738,48 @@
                 }
             } catch (error) {
                 statsDiv.innerHTML = '<div class="alert alert-error">网络错误，请重试</div>';
+            }
+        }
+        
+        // 管理员功能 - 清理数据库
+        async function cleanDatabase() {
+            if (!currentUser || currentUser.privilege < 5) {
+                alert('权限不足！需要管理员权限。');
+                return;
+            }
+            
+            // 确认操作
+            if (!confirm('⚠️ 警告：这将清除所有数据库文件！\n\n此操作包括：\n- 所有用户数据\n- 所有车次信息\n- 所有订单记录\n- 所有座位信息\n\n确定要继续吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/clean', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-Token': sessionToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ 数据库清理成功！\n\n系统已重置，所有数据已清除。');
+                    
+                    // 清理成功后，刷新统计信息
+                    await loadSystemStats();
+                    
+                    // 清空当前页面的数据显示
+                    document.getElementById('trains-table').innerHTML = '<div class="alert alert-info">数据已清除</div>';
+                    document.getElementById('admin-results').innerHTML = '';
+                    
+                } else {
+                    alert('❌ 清理失败：' + (data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('❌ 网络错误：无法连接到服务器');
+                console.error('Clean database error:', error);
             }
         }
         

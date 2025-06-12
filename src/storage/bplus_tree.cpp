@@ -19,6 +19,7 @@ void BPT<Key, Value>::insert(const Key& key, const Value& value) {
     block_file_.write_info(head_, 1);
     // index_file_.write_info(root_, 1);
     height_ = 0;
+    data_num_ = 1;
     return;
   }
 
@@ -33,6 +34,7 @@ void BPT<Key, Value>::insert(const Key& key, const Value& value) {
   if (leaf_split) {
     insertIntoParent(path, path.size() - 1, split_key, new_leaf_addr);
   }
+  data_num_++;
 }
 
 template <class Key, class Value>
@@ -55,6 +57,7 @@ void BPT<Key, Value>::remove(const Key& key, const Value& value) {
     leaf.data[i] = leaf.data[i + 1];
   }
   leaf.size--;
+  data_num_--;
   if (leaf.size >= (DEFAULT_LEAF_SIZE + 1) / 3) {
     block_file_.update(leaf, leaf_addr);
     // cache_manager_.update_block(leaf, leaf_addr);
@@ -556,6 +559,7 @@ void BPT<Key, Value>::remove(const Key& key) {
     leaf.data[i] = leaf.data[i + 1];
   }
   leaf.size--;
+  data_num_--;
   if (leaf.size >= (DEFAULT_LEAF_SIZE + 1) / 3) {
     block_file_.update(leaf, leaf_addr);
     // cache_manager_.update_block(leaf, leaf_addr);
