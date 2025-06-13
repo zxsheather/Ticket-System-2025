@@ -156,6 +156,19 @@
             box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
         }
         
+        /* 模态框按钮容器样式 */
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .modal-buttons .btn {
+            flex: 1;
+            min-width: 100px;
+        }
+        
         .results {
             margin-top: 30px;
         }
@@ -236,11 +249,13 @@
         
         .modal-content {
             background-color: white;
-            margin: 5% auto;
+            margin: 2% auto;
             padding: 30px;
             border-radius: 20px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: modalSlideIn 0.3s ease;
         }
@@ -450,6 +465,24 @@
             color: #856404;
         }
         
+        /* 管理员按钮容器样式 */
+        .admin-buttons-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: stretch;
+        }
+        
+        .admin-buttons-container .btn {
+            white-space: nowrap;
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -472,6 +505,61 @@
             .ticket-details {
                 flex-direction: column;
                 gap: 15px;
+            }
+            
+            /* 移动端管理员按钮优化 */
+            .admin-buttons-container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .admin-buttons-container .btn {
+                font-size: 14px;
+                padding: 12px 20px;
+                min-height: 45px;
+            }
+            
+            /* 移动端模态框优化 */
+            .modal-content {
+                margin: 1% auto;
+                padding: 20px;
+                width: 95%;
+                max-height: 95vh;
+            }
+            
+            .modal-content h2 {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+            
+            .form-group label {
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+            
+            .form-group input, .form-group select {
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-buttons .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .admin-buttons-container {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 12px;
             }
         }
     </style>
@@ -563,7 +651,7 @@
             <!-- 管理员 -->
             <div id="admin-content" class="tab-content">
                 <h3>🚂 车次管理</h3>
-                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div class="admin-buttons-container">
                     <button class="btn" onclick="showAddTrainModal()">➕ 添加车次</button>
                     <button class="btn btn-danger" onclick="showDeleteTrainModal()">🗑️ 删除车次</button>
                     <button class="btn btn-primary" onclick="showReleaseTrainModal()">🚀 发布车次</button>
@@ -722,7 +810,7 @@
                     </div>
                 </div>
                 <div id="add-train-alert"></div>
-                <div style="display: flex; gap: 10px;">
+                <div class="modal-buttons">
                     <button type="button" class="btn" onclick="addTrain()">添加列车</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('add-train-modal')">取消</button>
                 </div>
@@ -740,7 +828,7 @@
                 <input type="text" id="delete-train-id" placeholder="请输入要删除的车次号" required>
             </div>
             <div id="delete-train-alert"></div>
-            <div style="display: flex; gap: 10px;">
+            <div class="modal-buttons">
                 <button type="button" class="btn btn-danger" onclick="deleteTrain()">删除列车</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('delete-train-modal')">取消</button>
             </div>
@@ -757,7 +845,7 @@
                 <input type="text" id="release-train-id" placeholder="请输入要发布的车次号" required>
             </div>
             <div id="release-train-alert"></div>
-            <div style="display: flex; gap: 10px;">
+            <div class="modal-buttons">
                 <button type="button" class="btn btn-primary" onclick="releaseTrain()">发布列车</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('release-train-modal')">取消</button>
             </div>

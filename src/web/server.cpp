@@ -944,14 +944,12 @@ crow::response WebServer::handleGetAllTrains(const crow::request& req) {
     }
 }
 
-// 管理员功能 - 搜索车次
 crow::response WebServer::handleSearchTrains(const crow::request& req) {
     std::string username;
     if (!isAuthenticated(req, username)) {
         return errorResponse("Authentication required", 401);
     }
     
-    // 检查管理员权限
     if (!hasAdminPrivilege(username)) {
         return errorResponse("Admin privilege required", 403);
     }
@@ -976,20 +974,17 @@ crow::response WebServer::handleSearchTrains(const crow::request& req) {
     }
 }
 
-// 管理员功能 - 获取系统统计 - 使用 Command Handler
 crow::response WebServer::handleGetSystemStats(const crow::request& req) {
     std::string username;
     if (!isAuthenticated(req, username)) {
         return errorResponse("Authentication required", 401);
     }
     
-    // 检查管理员权限
     if (!hasAdminPrivilege(username)) {
         return errorResponse("Admin privilege required", 403);
     }
     
     try {
-        // 使用DataNumQueryHandler获取系统统计信息
         ParamMap params;
         std::string timestamp = "WEB";
         

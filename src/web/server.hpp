@@ -32,7 +32,7 @@ public:
     void run(int port = 8080);
     
 private:
-    // 工具方法
+    
     std::string generateSessionId();
     bool isAuthenticated(const crow::request& req, std::string& username);
     bool hasAdminPrivilege(const std::string& username);
@@ -40,7 +40,6 @@ private:
     crow::response errorResponse(const std::string& message, int status = 400);
     crow::response commandResultToResponse(const CommandResult& result);
     
-    // API处理方法
     crow::response handleLogin(const crow::request& req);
     crow::response handleRegister(const crow::request& req);
     crow::response handleLogout(const crow::request& req);
@@ -54,7 +53,6 @@ private:
     crow::response handleQueryOrders(const crow::request& req);
     crow::response handleRefundTicket(const crow::request& req, const std::string& order_id);
     
-    // 管理员功能
     crow::response handleAddTrain(const crow::request& req);
     crow::response handleDeleteTrain(const crow::request& req, const std::string& train_id);
     crow::response handleReleaseTrain(const crow::request& req, const std::string& train_id);
